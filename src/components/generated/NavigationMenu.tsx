@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Lottie from 'lottie-react';
 interface NavigationMenuProps {
   initialMode?: 'light' | 'dark';
 }
@@ -24,10 +25,60 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
   const [brandColor, setBrandColor] = useState('#015A57');
   const [redirectionLink, setRedirectionLink] = useState('');
   const clickAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [processingAnimationData, setProcessingAnimationData] = useState<any>(null);
 
   useEffect(() => {
     clickAudioRef.current = new Audio('https://storage.googleapis.com/storage.magicpath.ai/global-assets/click-soft-01.mp3');
   }, []);
+
+  // Load the Lottie animation JSON
+  useEffect(() => {
+    fetch('/processing.json')
+      .then(res => res.json())
+      .then(data => setProcessingAnimationData(data))
+      .catch(err => console.error('Failed to load processing animation:', err));
+  }, []);
+
+  // Function to modify Lottie animation colors for dark mode
+  const getProcessedAnimationData = () => {
+    if (!processingAnimationData) {
+      return null;
+    }
+    
+    if (!isDarkMode) {
+      return processingAnimationData;
+    }
+    
+    // Deep clone the animation data
+    const modifiedData = JSON.parse(JSON.stringify(processingAnimationData));
+    
+    // Convert hex #E7E7E7 to RGB normalized: [0.906, 0.906, 0.906, 1]
+    const darkModeColor = [231 / 255, 231 / 255, 231 / 255, 1];
+    
+    // Recursively modify color values in the animation data
+    const modifyColors = (obj: any): void => {
+      if (Array.isArray(obj)) {
+        obj.forEach(item => modifyColors(item));
+      } else if (obj && typeof obj === 'object') {
+        // Check for stroke and fill color properties
+        // Lottie format: {"ty":"st","c":{"a":0,"k":[r,g,b,a]}} or {"ty":"fl","c":{"a":0,"k":[r,g,b,a]}}
+        if (obj.c && obj.c.k && Array.isArray(obj.c.k) && obj.c.k.length >= 3) {
+          const [r, g, b] = obj.c.k;
+          // Only modify black/dark colors (r, g, b < 0.1)
+          if (r < 0.1 && g < 0.1 && b < 0.1) {
+            obj.c.k = darkModeColor;
+          }
+        }
+        // Recursively process nested objects
+        Object.keys(obj).forEach(key => {
+          modifyColors(obj[key]);
+        });
+      }
+    };
+    
+    modifyColors(modifiedData);
+    return modifiedData;
+  };
 
   const playClickSound = () => {
     let audio = clickAudioRef.current;
@@ -41,6 +92,28 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
       // Ignore autoplay or interaction errors
     });
   };
+  const PageSection: React.FC<{ children: React.ReactNode; pageKey: string }> = ({
+    children,
+    pageKey
+  }) => (
+    <motion.div
+      key={pageKey}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: 0.3,
+        ease: [0.4, 0, 0.2, 1]
+      }}
+      style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative'
+      }}
+    >
+      {children}
+    </motion.div>
+  );
   const colors = {
     bg: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'rgba(255, 255, 255, 1)',
     sidebarBg: isDarkMode ? 'rgba(23, 23, 23, 1)' : 'rgba(250, 250, 250, 1)',
@@ -52,6 +125,21 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
     inputBg: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'rgba(255, 255, 255, 1)',
     accent: 'rgba(37, 99, 235, 1)',
     white: 'rgba(255, 255, 255, 1)'
+  };
+  
+  // Helper function to get icon filter based on selection and theme
+  const getIconFilter = (isSelected: boolean) => {
+    if (!isSelected) {
+      return 'grayscale(100%) brightness(0.6)';
+    }
+    // Light mode selected: #1B86FF, Dark mode selected: #3F83F8
+    if (isDarkMode) {
+      // #3F83F8 for dark mode (RGB: 63, 131, 248)
+      return 'brightness(0) saturate(100%) invert(27%) sepia(96%) saturate(1352%) hue-rotate(195deg) brightness(99%) contrast(101%)';
+    } else {
+      // #1B86FF for light mode (RGB: 27, 134, 255)
+      return 'brightness(0) saturate(100%) invert(11%) sepia(100%) saturate(7498%) hue-rotate(210deg) brightness(100%) contrast(100%)';
+    }
   };
   const navItems = [{
     name: 'Dashboard',
@@ -1651,7 +1739,8 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                   }}
                   alt={item.name}
                   animate={{
-              opacity: activeNavigation === item.name ? 1 : 0.6
+                    opacity: activeNavigation === item.name ? 1 : 0.6,
+                    filter: getIconFilter(activeNavigation === item.name)
                   }}
                   transition={{
                     duration: 0.2,
@@ -1702,23 +1791,32 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                 playClickSound();
                 setActiveNavigation(item.name);
               }}
-              whileHover={{ scale: 1.02, x: 2, opacity: 1 }}
+              whileHover={{ scale: 1.02, x: 2 }}
               whileTap={{ scale: 0.98 }}
-              transition={{
-                duration: 0.2,
-                ease: [0.4, 0, 0.2, 1]
-              }}
               style={{
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
             padding: '8px 12px',
-            background: 'none',
             border: 'none',
             borderRadius: '8px',
             cursor: 'pointer',
+                backgroundColor: 'transparent',
+                boxShadow: 'none',
+                borderWidth: '0px',
+            borderStyle: 'solid',
+            borderColor: colors.border,
             width: '100%',
             textAlign: 'left'
+              }}
+              animate={{
+                backgroundColor: activeNavigation === item.name ? isDarkMode ? 'rgba(10, 10, 10, 1)' : 'white' : 'transparent',
+                boxShadow: activeNavigation === item.name ? '0px 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                borderWidth: activeNavigation === item.name ? '1px' : '0px'
+              }}
+              transition={{
+                duration: 0.3,
+                ease: [0.4, 0, 0.2, 1]
               }}
             >
                 <motion.img
@@ -1728,10 +1826,8 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                   }}
                   alt={item.name}
                   animate={{
-              opacity: 0.6
-                  }}
-                  whileHover={{
-                    opacity: 1
+                    opacity: activeNavigation === item.name ? 1 : 0.6,
+                    filter: getIconFilter(activeNavigation === item.name)
                   }}
                   transition={{
                     duration: 0.2,
@@ -1740,13 +1836,12 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                 />
                 <motion.span
                   style={{
-              color: colors.textMuted,
               fontSize: '14px',
               fontWeight: 500,
               fontFamily: '"Geist", sans-serif'
                   }}
-                  whileHover={{
-                    color: colors.textPrimary
+                  animate={{
+                    color: activeNavigation === item.name ? isDarkMode ? colors.white : 'rgba(10, 10, 10, 1)' : colors.textMuted
                   }}
                   transition={{
                     duration: 0.2,
@@ -1805,23 +1900,14 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
       </aside>
 
       {/* Main Content */}
-      <AnimatePresence mode="wait">
-        <motion.main
-          key={activeNavigation}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{
-            duration: 0.3,
-            ease: [0.4, 0, 0.2, 1]
-          }}
-          style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            position: 'relative'
-          }}
-        >
+      <main
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative'
+        }}
+      >
         {activeNavigation === 'Comissions' ? (
           <>
             {/* Commissions Header */}
@@ -2140,7 +2226,9 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              borderTop: `1px solid ${colors.border}`
+              borderTop: `1px solid ${colors.border}`,
+              marginTop: 'auto',
+              backgroundColor: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'rgba(255, 255, 255, 1)'
             }}>
               <span style={{
                 fontSize: '14px',
@@ -2292,6 +2380,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
               </div>
             </header>
 
+            <PageSection pageKey="Campaigns / Events">
             {/* Campaigns/Events Table */}
             <div style={{
               flex: 1,
@@ -2463,7 +2552,9 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              borderTop: `1px solid ${colors.border}`
+              borderTop: `1px solid ${colors.border}`,
+              marginTop: 'auto',
+              backgroundColor: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'rgba(255, 255, 255, 1)'
             }}>
               <span style={{
                 fontSize: '14px',
@@ -2528,6 +2619,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
               </button>
               </div>
             </footer>
+            </PageSection>
           </>
         ) : activeNavigation === 'Sub-Partners' ? (
           <>
@@ -2602,6 +2694,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
               </div>
             </header>
 
+            <PageSection pageKey="Sub-Partners">
             {/* Sub-Partners Table */}
             <div style={{
               flex: 1,
@@ -2782,7 +2875,9 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              borderTop: `1px solid ${colors.border}`
+              borderTop: `1px solid ${colors.border}`,
+              marginTop: 'auto',
+              backgroundColor: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'rgba(255, 255, 255, 1)'
             }}>
               <span style={{
                 fontSize: '14px',
@@ -2847,6 +2942,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                 </button>
               </div>
             </footer>
+            </PageSection>
           </>
         ) : activeNavigation === 'Support' ? (
           <>
@@ -3800,6 +3896,107 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
               </div>
             </div>
           </>
+        ) : activeNavigation === 'Dashboard' ? (
+          <>
+            {/* Dashboard Header */}
+            <header style={{
+              height: '56px',
+              padding: '0 24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderBottom: `1px solid ${colors.border}`,
+              backgroundColor: isDarkMode ? 'rgba(23, 23, 23, 1)' : 'rgba(250, 250, 250, 1)'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px'
+              }}>
+                <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/7535b31f-4722-4f37-b3f2-a80994c6c8e2.svg" style={{
+                  width: '20px'
+                }} alt="back" />
+                <div style={{
+                  height: '16px',
+                  borderLeft: `1px solid ${colors.border}`
+                }} />
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <span style={{
+                    fontSize: '14px',
+                    color: colors.textPrimary,
+                    fontFamily: '"Geist Mono"',
+                    textTransform: 'uppercase'
+                  }}>Dashboard</span>
+                </div>
+              </div>
+            </header>
+
+            <PageSection pageKey="Dashboard">
+              {/* Empty State */}
+              <div style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '24px',
+                padding: '48px'
+              }}>
+                <div style={{
+                  width: '200px',
+                  height: '200px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {processingAnimationData ? (
+                    <Lottie
+                      animationData={getProcessedAnimationData()}
+                      loop={true}
+                      autoplay={true}
+                      style={{
+                        width: '200px',
+                        height: '200px'
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: '200px',
+                      height: '200px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: colors.textSecondary
+                    }}>
+                      Loading...
+                    </div>
+                  )}
+                </div>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <span style={{
+                    fontSize: '18px',
+                    fontWeight: 600,
+                    color: colors.textPrimary,
+                    fontFamily: '"Geist", sans-serif'
+                  }}>Metabase getting embedded soon</span>
+                  <span style={{
+                    fontSize: '14px',
+                    color: colors.textSecondary,
+                    fontFamily: '"Geist", sans-serif'
+                  }}>Your analytics dashboard will appear here</span>
+                </div>
+              </div>
+            </PageSection>
+          </>
         ) : (
           <>
         <header style={{
@@ -4278,29 +4475,14 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
         left: 0,
         right: 0,
         bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 100
       }}>
-          {/* Progressive blur backdrop - lighter at center, stronger at edges */}
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            backgroundColor: 'rgba(0, 0, 0, 0.2)',
-            maskImage: 'radial-gradient(ellipse 70% 50% at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0.7) 100%)',
-            WebkitMaskImage: 'radial-gradient(ellipse 70% 50% at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0.7) 100%)'
-          }} />
-          {/* Modal content container */}
-          <div style={{
-            position: 'relative',
-            zIndex: 1
-          }}>
             <div style={{
           width: '577px',
           backgroundColor: colors.bg,
@@ -4465,11 +4647,9 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
             }}>Apply filters</button>
               </div>
             </div>
-          </div>
           </div>}
           </>
         )}
-        </motion.main>
-      </AnimatePresence>
+      </main>
     </div>;
 };
