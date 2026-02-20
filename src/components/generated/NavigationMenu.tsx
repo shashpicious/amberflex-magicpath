@@ -7,11 +7,11 @@ interface NavigationMenuProps {
 export const NavigationMenu: React.FC<NavigationMenuProps> = ({
   initialMode = 'light'
 }) => {
-  const [activeTab, setActiveTab] = useState('Leads');
+  const [activeTab, setActiveTab] = useState('Dashboard');
   const [isDarkMode, setIsDarkMode] = useState(initialMode === 'dark');
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [activeNavigation, setActiveNavigation] = useState('Leads');
+  const [activeNavigation, setActiveNavigation] = useState('Dashboard');
   const [currentPage, setCurrentPage] = useState(1);
   const [campaignsPage, setCampaignsPage] = useState(1);
   const [commissionsPage, setCommissionsPage] = useState(1);
@@ -30,6 +30,17 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
   useEffect(() => {
     clickAudioRef.current = new Audio('https://storage.googleapis.com/storage.magicpath.ai/global-assets/click-soft-01.mp3');
   }, []);
+
+  // Set default tab to 'Leads' when navigating to Leads page
+  useEffect(() => {
+    if (activeNavigation === 'Leads') {
+      // Only set to 'Leads' if currently on a different page's tab (like 'Dashboard')
+      // This allows users to switch between 'Leads' and 'Prequalified Leads' while on Leads page
+      if (activeTab !== 'Leads' && activeTab !== 'Prequalified Leads') {
+        setActiveTab('Leads');
+      }
+    }
+  }, [activeNavigation]);
 
   // Load the Lottie animation JSON
   useEffect(() => {
@@ -148,7 +159,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
     name: 'Leads',
     icon: 'https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/b180e1ef-0a90-4d54-8be8-d7485798bba5.svg'
   }, {
-    name: 'Comissions',
+    name: 'Commissions',
     icon: 'https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/d24c3c5c-cbef-4075-8479-4c40bb721d85.svg'
   }, {
     name: 'Listings',
@@ -1908,7 +1919,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
           position: 'relative'
         }}
       >
-        {activeNavigation === 'Comissions' ? (
+        {activeNavigation === 'Commissions' ? (
           <>
             {/* Commissions Header */}
             <header style={{
@@ -1951,7 +1962,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                     color: colors.textPrimary,
                     fontFamily: '"Geist Mono"',
                     textTransform: 'uppercase'
-                  }}>Comissions</span>
+                  }}>Commissions</span>
                 </div>
               </div>
               <div style={{
