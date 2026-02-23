@@ -1,6 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Lottie from 'lottie-react';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
+import { ChevronDown, Calendar, Filter, Info, Home, Plus, X, ChevronLeft, ChevronRight, Check, ArrowUpDown, Download, Sun, Moon } from 'lucide-react';
 interface NavigationMenuProps {
   initialMode?: 'light' | 'dark';
 }
@@ -18,6 +33,12 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
   const [subPartnersPage, setSubPartnersPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
   const [bookingTypeFilter, setBookingTypeFilter] = useState('');
+  const [commissionsSearch, setCommissionsSearch] = useState('');
+  const [commissionDetailsOpen, setCommissionDetailsOpen] = useState(false);
+  const [selectedCommission, setSelectedCommission] = useState<{ poNumber: string; bookingType: string; date: string; status: string; amount: string; amountDue: string } | null>(null);
+  const [commissionDetailsTab, setCommissionDetailsTab] = useState<'booking' | 'payment'>('booking');
+  const [commissionsSortBy, setCommissionsSortBy] = useState<'createdOn' | 'amount' | 'amountDue' | null>(null);
+  const [commissionsSortDir, setCommissionsSortDir] = useState<'asc' | 'desc'>('asc');
   const [subPartnersStatusFilter, setSubPartnersStatusFilter] = useState('');
   const [subPartnersBookingTypeFilter, setSubPartnersBookingTypeFilter] = useState('');
   const itemsPerPage = 10;
@@ -26,10 +47,23 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
   const [redirectionLink, setRedirectionLink] = useState('');
   const clickAudioRef = useRef<HTMLAudioElement | null>(null);
   const [processingAnimationData, setProcessingAnimationData] = useState<any>(null);
+  const [dashboardDateRange, setDashboardDateRange] = useState('Last 7 days');
+  const [dashboardLeadsView, setDashboardLeadsView] = useState<'total' | 'unique'>('total');
+  const [cityInsightsPage, setCityInsightsPage] = useState(1);
+  const [listingsPage, setListingsPage] = useState(1);
+  const [listingsPropertySearch, setListingsPropertySearch] = useState('');
+  const [listingsProviderFilter, setListingsProviderFilter] = useState('');
+  const [listingsRegionsFilter, setListingsRegionsFilter] = useState('');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [hoveredNavItem, setHoveredNavItem] = useState<string | null>(null);
 
   useEffect(() => {
     clickAudioRef.current = new Audio('https://storage.googleapis.com/storage.magicpath.ai/global-assets/click-soft-01.mp3');
   }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDarkMode);
+  }, [isDarkMode]);
 
   // Set default tab to 'Leads' when navigating to Leads page
   useEffect(() => {
@@ -141,12 +175,15 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
   // Helper function to get icon filter based on selection and theme
   const getIconFilter = (isSelected: boolean) => {
     if (!isSelected) {
+      if (isDarkMode) {
+        // Match textMuted in dark mode (~rgba(115, 115, 115)) — invert to light gray
+        return 'brightness(0) saturate(100%) invert(46%) sepia(0%) saturate(0%) brightness(100%) contrast(90%)';
+      }
       return 'grayscale(100%) brightness(0.6)';
     }
-    // Light mode selected: #1B86FF, Dark mode selected: #3F83F8
     if (isDarkMode) {
-      // #3F83F8 for dark mode (RGB: 63, 131, 248)
-      return 'brightness(0) saturate(100%) invert(27%) sepia(96%) saturate(1352%) hue-rotate(195deg) brightness(99%) contrast(101%)';
+      // Selected in dark mode: white icons to match white text
+      return 'brightness(0) saturate(100%) invert(100%)';
     } else {
       // #1B86FF for light mode (RGB: 27, 134, 255)
       return 'brightness(0) saturate(100%) invert(11%) sepia(100%) saturate(7498%) hue-rotate(210deg) brightness(100%) contrast(100%)';
@@ -1047,9 +1084,55 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
       textColor: 'rgba(75, 75, 75, 1)'
     }
   ] as any[];
+
+  // Listings data (123 entries for pagination demo)
+  const listingsDataBase = [
+    { propertyName: 'Connectid1', providerName: 'A & O hostels', type: 'Student Accommodation' },
+    { propertyName: '360 King Street, Melbourne', providerName: 'Asset living', type: 'Independent House' },
+    { propertyName: 'HMO slash Pricing', providerName: 'True student', type: 'Private Housing' },
+    { propertyName: 'Mapbox_Bamio', providerName: 'City block', type: 'University Dormitories' },
+    { propertyName: 'Do not Edit, Testing Inventory...', providerName: 'A & O hostels', type: 'Shared Flats' },
+    { propertyName: 'Inventory Check Complete.', providerName: 'Asset living', type: 'Homestays' },
+    { propertyName: 'Items Updated Successfully.', providerName: 'True student', type: 'Student Accommodation' },
+    { propertyName: 'Data Saved Successfully.', providerName: 'City block', type: 'Independent House' },
+    { propertyName: 'Changes Applied Without Errors.', providerName: 'A & O hostels', type: 'Private Housing' },
+    { propertyName: 'Operation Completed Successfully.', providerName: 'Asset living', type: 'University Dormitories' },
+    { propertyName: 'Record Updated with New Information.', providerName: 'True student', type: 'Shared Flats' },
+    { propertyName: 'Campus View Apartments', providerName: 'City block', type: 'Student Accommodation' },
+    { propertyName: 'Riverside Student House', providerName: 'A & O hostels', type: 'Homestays' },
+    { propertyName: 'Metro Living Co', providerName: 'Asset living', type: 'Independent House' },
+    { propertyName: 'Urban Stay Residences', providerName: 'True student', type: 'Private Housing' },
+    { propertyName: 'Central Student Hub', providerName: 'City block', type: 'University Dormitories' },
+    { propertyName: 'Northgate Halls', providerName: 'A & O hostels', type: 'Shared Flats' },
+    { propertyName: 'Eastside Studios', providerName: 'Asset living', type: 'Student Accommodation' },
+    { propertyName: 'West End Living', providerName: 'True student', type: 'Homestays' },
+    { propertyName: 'Downtown Student Suites', providerName: 'City block', type: 'Independent House' },
+    { propertyName: 'Parkview Accommodation', providerName: 'A & O hostels', type: 'Private Housing' },
+    { propertyName: 'Harbour Side Residences', providerName: 'Asset living', type: 'University Dormitories' },
+    { propertyName: 'Garden Court Apartments', providerName: 'True student', type: 'Shared Flats' },
+    { propertyName: 'Summit Student Living', providerName: 'City block', type: 'Student Accommodation' },
+    { propertyName: 'Lakeside Dorms', providerName: 'A & O hostels', type: 'Homestays' },
+    { propertyName: 'Hilltop House', providerName: 'Asset living', type: 'Independent House' }
+  ];
+  const listingsData = Array.from({ length: 123 }, (_, i) => ({
+    ...listingsDataBase[i % listingsDataBase.length],
+    propertyName: i < listingsDataBase.length ? listingsDataBase[i].propertyName : `${listingsDataBase[i % listingsDataBase.length].propertyName} (${i + 1})`
+  }));
+  const listingsItemsPerPage = 25;
+  const listingsTotalEntries = 123;
+  const filteredListingsData = listingsData.filter((row) => {
+    const matchSearch = !listingsPropertySearch || row.propertyName.toLowerCase().includes(listingsPropertySearch.toLowerCase());
+    const matchProvider = !listingsProviderFilter || row.providerName === listingsProviderFilter;
+    const matchRegions = !listingsRegionsFilter;
+    return matchSearch && matchProvider && matchRegions;
+  });
+  const listingsTotalPages = Math.max(1, Math.ceil(filteredListingsData.length / listingsItemsPerPage));
+  const listingsStartIndex = (listingsPage - 1) * listingsItemsPerPage;
+  const currentListingsData = filteredListingsData.slice(listingsStartIndex, listingsStartIndex + listingsItemsPerPage);
+  const listingsDisplayTotal = filteredListingsData.length;
   
-  // Commissions data
-  const commissionsData = [
+  // Commissions data (base set, then expanded to 123 for pixel-perfect pagination)
+  const commissionsDataBase = [
     {
       poNumber: '378',
       bookingType: 'Advance',
@@ -1210,7 +1293,17 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
       amount: 'USD 90.0',
       amountDue: 'USD 90.0'
     }
-  ] as any[];
+  ];
+  const commissionsBaseLength = commissionsDataBase.length;
+  const commissionsData = Array.from({ length: 123 }, (_, i) => {
+    if (i < commissionsBaseLength) return { ...commissionsDataBase[i] };
+    const template = commissionsDataBase[i % commissionsBaseLength];
+    return {
+      ...template,
+      poNumber: String(378 - i),
+      status: ['Paid', 'Partially_paid', 'Unpaid', 'Approved', 'Rejected'][i % 5]
+    };
+  });
   
   // Sub-Partners data (same structure as commissions)
   const subPartnersData = [
@@ -1377,11 +1470,51 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
   ] as any[];
   
   // Filter commissions data
+  const commissionsItemsPerPage = 25;
   const filteredCommissionsData = commissionsData.filter(commission => {
     if (statusFilter && commission.status !== statusFilter) return false;
     if (bookingTypeFilter && commission.bookingType !== bookingTypeFilter) return false;
+    if (commissionsSearch) {
+      const q = commissionsSearch.toLowerCase();
+      if (!commission.poNumber.toLowerCase().includes(q) &&
+          !commission.bookingType.toLowerCase().includes(q) &&
+          !commission.status.toLowerCase().includes(q) &&
+          !commission.amount.toLowerCase().includes(q)) return false;
+    }
     return true;
   });
+
+  const parseCommissionDate = (dateStr: string) => {
+    const months: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+    const parts = dateStr.split(' ');
+    if (parts.length !== 3) return 0;
+    const [day, month, year] = parts;
+    const y = year.length === 2 ? 2000 + parseInt(year, 10) : parseInt(year, 10);
+    return new Date(y, months[month] ?? 0, parseInt(day, 10)).getTime();
+  };
+  const parseAmount = (s: string) => parseFloat(s.replace(/[^0-9.]/g, '')) || 0;
+
+  const sortedCommissionsData = [...filteredCommissionsData].sort((a, b) => {
+    if (!commissionsSortBy) return 0;
+    let cmp = 0;
+    if (commissionsSortBy === 'createdOn') {
+      cmp = parseCommissionDate(a.date) - parseCommissionDate(b.date);
+    } else if (commissionsSortBy === 'amount') {
+      cmp = parseAmount(a.amount) - parseAmount(b.amount);
+    } else if (commissionsSortBy === 'amountDue') {
+      cmp = parseAmount(a.amountDue) - parseAmount(b.amountDue);
+    }
+    return commissionsSortDir === 'asc' ? cmp : -cmp;
+  });
+
+  const handleCommissionsSort = (column: 'createdOn' | 'amount' | 'amountDue') => {
+    if (commissionsSortBy === column) {
+      setCommissionsSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setCommissionsSortBy(column);
+      setCommissionsSortDir('asc');
+    }
+  };
   
   // Filter Sub-Partners data
   const filteredSubPartnersData = subPartnersData.filter(item => {
@@ -1443,12 +1576,12 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
   };
   
   // Commissions pagination logic
-  const commissionsTotalItems = filteredCommissionsData.length;
-  const commissionsTotalPages = Math.ceil(commissionsTotalItems / itemsPerPage);
-  const commissionsStartIndex = (commissionsPage - 1) * itemsPerPage;
-  const commissionsEndIndex = commissionsStartIndex + itemsPerPage;
-  const currentCommissionsData = filteredCommissionsData.slice(commissionsStartIndex, commissionsEndIndex);
-  const commissionsStartItem = commissionsStartIndex + 1;
+  const commissionsTotalItems = sortedCommissionsData.length;
+  const commissionsTotalPages = Math.max(1, Math.ceil(commissionsTotalItems / commissionsItemsPerPage));
+  const commissionsStartIndex = (commissionsPage - 1) * commissionsItemsPerPage;
+  const commissionsEndIndex = commissionsStartIndex + commissionsItemsPerPage;
+  const currentCommissionsData = sortedCommissionsData.slice(commissionsStartIndex, commissionsEndIndex);
+  const commissionsStartItem = commissionsTotalItems === 0 ? 0 : commissionsStartIndex + 1;
   const commissionsEndItem = Math.min(commissionsEndIndex, commissionsTotalItems);
 
   const handleCommissionsPrevious = () => {
@@ -1628,10 +1761,10 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
   const getStatusBadge = (status: string) => {
     let bgColor = 'rgba(227, 146, 25, 0.1)';
     let textColor = 'rgba(217, 119, 6, 1)';
-    if (status === 'Booked' || status === 'Paid' || status === 'Active') {
+    if (status === 'Booked' || status === 'Paid' || status === 'Active' || status === 'Approved') {
       bgColor = 'rgba(22, 163, 74, 0.1)';
       textColor = 'rgba(22, 163, 74, 1)';
-    } else if (status === 'Not Booked' || status === 'Unpaid' || status === 'Inactive') {
+    } else if (status === 'Not Booked' || status === 'Unpaid' || status === 'Inactive' || status === 'Rejected') {
       bgColor = 'rgba(224, 52, 52, 0.1)';
       textColor = 'rgba(220, 38, 38, 1)';
     } else if (status === 'Partially_paid') {
@@ -1654,6 +1787,16 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
       }}>{status}</span>
       </div>;
   };
+
+  const formatCommissionDate = (dateStr: string) => {
+    const months: Record<string, string> = { Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06', Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12' };
+    const parts = dateStr.split(' ');
+    if (parts.length !== 3) return dateStr;
+    const [day, month, year] = parts;
+    const yy = year.length === 2 ? `20${year}` : year;
+    return `${day.padStart(2, '0')}/${months[month] || month}/${yy}`;
+  };
+
   return <div style={{
     display: 'flex',
     width: '100%',
@@ -1663,225 +1806,451 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
     position: 'relative'
   }}>
       {/* Sidebar */}
-      <aside style={{
-      width: '256px',
-      height: '100%',
-      backgroundColor: colors.sidebarBg,
-      borderRight: `1px solid ${colors.border}`,
-      display: 'flex',
-      flexDirection: 'column',
-      flexShrink: 0
-    }}>
+      <motion.aside
+        style={{
+          height: '100%',
+          backgroundColor: colors.sidebarBg,
+          borderRight: `1px solid ${colors.border}`,
+          display: 'flex',
+          flexDirection: 'column',
+          flexShrink: 0,
+          overflow: 'hidden',
+        }}
+        animate={{ width: isSidebarCollapsed ? 68 : 256 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+      >
         <header style={{
         height: '56px',
         padding: '0 12px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: isSidebarCollapsed ? 'center' : 'space-between',
         borderBottom: `1px solid ${colors.border}`
       }}>
-          <img src={isDarkMode ? "https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/a37d54b8-199b-45da-a0df-bb52b93313f4.svg" : "https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/0ae077f3-aa72-4d4b-8e69-1f00db96b9a1.svg"} alt="Logo" style={{
-          width: '110px'
-        }} />
-          <button style={{
-          background: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'white',
-          border: `1px solid ${colors.border}`,
-          borderRadius: '8px',
-          padding: '6px',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center'
-        }} onClick={() => setIsDarkMode(!isDarkMode)}>
-            <img src={isDarkMode ? "https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/7ee9a22d-cb46-403a-8d30-f9de6e035d6e.svg" : "https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/a6f48239-ae45-4de9-a34b-13ef6dfadbb2.svg"} alt="Collapse" style={{
-            width: '16px'
-          }} />
-          </button>
+          <AnimatePresence>
+            {!isSidebarCollapsed && (
+              <motion.img
+                key="sidebar-logo"
+                src={isDarkMode ? "https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/a37d54b8-199b-45da-a0df-bb52b93313f4.svg" : "https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/0ae077f3-aa72-4d4b-8e69-1f00db96b9a1.svg"}
+                alt="Logo"
+                style={{ width: '110px' }}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.2 }}
+              />
+            )}
+          </AnimatePresence>
+          <motion.button
+            style={{
+              background: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'white',
+              border: `1px solid ${colors.border}`,
+              borderRadius: '8px',
+              padding: '6px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              flexShrink: 0,
+            }}
+            onClick={() => {
+              playClickSound();
+              setIsSidebarCollapsed(prev => !prev);
+            }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <motion.img
+              src={isDarkMode ? "https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/7ee9a22d-cb46-403a-8d30-f9de6e035d6e.svg" : "https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/a6f48239-ae45-4de9-a34b-13ef6dfadbb2.svg"}
+              alt="Collapse"
+              style={{ width: '16px' }}
+              animate={{ rotate: isSidebarCollapsed ? 180 : 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            />
+          </motion.button>
         </header>
 
         <div style={{
         flex: 1,
-        padding: '16px 8px',
+        padding: isSidebarCollapsed ? '16px 4px' : '16px 8px',
         overflowY: 'auto'
       }}>
           <div style={{
           display: 'flex',
           flexDirection: 'column',
           gap: '4px',
-          position: 'relative'
+          position: 'relative',
+          alignItems: isSidebarCollapsed ? 'center' : 'stretch'
         }}>
-            {navItems.map(item => <motion.button
-              key={item.name}
-              onClick={() => {
-                playClickSound();
-                setActiveNavigation(item.name);
-              }}
-              whileHover={{ scale: 1.02, x: 2 }}
-              whileTap={{ scale: 0.98 }}
-              style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '8px 12px',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-                backgroundColor: 'transparent',
-                boxShadow: 'none',
-                borderWidth: '0px',
-            borderStyle: 'solid',
-            borderColor: colors.border,
-            width: '100%',
-            textAlign: 'left'
-              }}
-              animate={{
-                backgroundColor: activeNavigation === item.name ? isDarkMode ? 'rgba(10, 10, 10, 1)' : 'white' : 'transparent',
-                boxShadow: activeNavigation === item.name ? '0px 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
-                borderWidth: activeNavigation === item.name ? '1px' : '0px'
-              }}
-              transition={{
-                duration: 0.3,
-                ease: [0.4, 0, 0.2, 1]
-              }}
+            {navItems.map(item => <div key={item.name} style={{ position: 'relative' }}
+              onMouseEnter={() => isSidebarCollapsed && setHoveredNavItem(item.name)}
+              onMouseLeave={() => setHoveredNavItem(null)}
             >
+              <motion.button
+                onClick={() => {
+                  playClickSound();
+                  setActiveNavigation(item.name);
+                }}
+                whileHover={{ scale: 1.02, x: isSidebarCollapsed ? 0 : 2 }}
+                whileTap={{ scale: 0.98 }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: isSidebarCollapsed ? '10px' : '8px 12px',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  backgroundColor: 'transparent',
+                  boxShadow: 'none',
+                  borderWidth: '0px',
+                  borderStyle: 'solid',
+                  borderColor: colors.border,
+                  width: isSidebarCollapsed ? '44px' : '100%',
+                  justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
+                  textAlign: 'left',
+                }}
+                animate={{
+                  backgroundColor: activeNavigation === item.name ? isDarkMode ? 'rgba(10, 10, 10, 1)' : 'white' : 'transparent',
+                  boxShadow: activeNavigation === item.name ? '0px 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                  borderWidth: activeNavigation === item.name ? '1px' : '0px'
+                }}
+                transition={{
+                  duration: 0.3,
+                  ease: [0.4, 0, 0.2, 1]
+                }}
+              >
                 <motion.img
                   src={item.icon}
-                  style={{
-                    width: '16px'
-                  }}
+                  style={{ width: '16px', flexShrink: 0 }}
                   alt={item.name}
                   animate={{
                     opacity: activeNavigation === item.name ? 1 : 0.6,
                     filter: getIconFilter(activeNavigation === item.name)
                   }}
-                  transition={{
-                    duration: 0.2,
-                    ease: [0.4, 0, 0.2, 1]
-                  }}
+                  transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
                 />
-                <motion.span
-                  style={{
-              fontSize: '14px',
-              fontWeight: 500,
-              fontFamily: '"Geist", sans-serif'
-                  }}
-                  animate={{
-                    color: activeNavigation === item.name ? isDarkMode ? colors.white : 'rgba(10, 10, 10, 1)' : colors.textMuted
-                  }}
-                  transition={{
-                    duration: 0.2,
-                    ease: [0.4, 0, 0.2, 1]
-                  }}
-                >
-                  {item.name}
-                </motion.span>
-              </motion.button>)}
+                {!isSidebarCollapsed && (
+                  <motion.span
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      fontFamily: '"Geist", sans-serif',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                    }}
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: 'auto' }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                  >
+                    <motion.span
+                      animate={{
+                        color: activeNavigation === item.name ? isDarkMode ? colors.white : 'rgba(10, 10, 10, 1)' : colors.textMuted
+                      }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {item.name}
+                    </motion.span>
+                  </motion.span>
+                )}
+              </motion.button>
+              <AnimatePresence>
+                {isSidebarCollapsed && hoveredNavItem === item.name && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -4 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -4 }}
+                    transition={{ duration: 0.15 }}
+                    style={{
+                      position: 'absolute',
+                      left: '52px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      backgroundColor: isDarkMode ? 'rgba(39, 39, 42, 1)' : 'rgba(10, 10, 10, 1)',
+                      color: 'rgba(255, 255, 255, 1)',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      fontFamily: '"Geist", sans-serif',
+                      whiteSpace: 'nowrap',
+                      zIndex: 100,
+                      pointerEvents: 'none',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    }}
+                  >
+                    {item.name}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>)}
           </div>
 
-          <div style={{
-          marginTop: '24px',
-          paddingLeft: '12px',
-          marginBottom: '8px'
-        }}>
-            <span style={{
-            fontSize: '12px',
-            fontWeight: 500,
-            color: colors.textSecondary,
-            letterSpacing: '0.5px',
-            opacity: 0.7
-          }}>SYSTEM</span>
-          </div>
+          <AnimatePresence>
+            {!isSidebarCollapsed && (
+              <motion.div
+                style={{
+                  marginTop: '24px',
+                  paddingLeft: '12px',
+                  marginBottom: '8px',
+                  overflow: 'hidden',
+                }}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <span style={{
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  color: colors.textSecondary,
+                  letterSpacing: '0.5px',
+                  opacity: 0.7
+                }}>SYSTEM</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          {isSidebarCollapsed && (
+            <div style={{
+              margin: '12px auto 8px',
+              width: '28px',
+              height: '1px',
+              backgroundColor: colors.border,
+            }} />
+          )}
 
           <div style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '4px'
+          gap: '4px',
+          alignItems: isSidebarCollapsed ? 'center' : 'stretch'
         }}>
-            {systemItems.map(item => <motion.button
-              key={item.name}
-              onClick={() => {
-                playClickSound();
-                setActiveNavigation(item.name);
-              }}
-              whileHover={{ scale: 1.02, x: 2 }}
-              whileTap={{ scale: 0.98 }}
-              style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '8px 12px',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-                backgroundColor: 'transparent',
-                boxShadow: 'none',
-                borderWidth: '0px',
-            borderStyle: 'solid',
-            borderColor: colors.border,
-            width: '100%',
-            textAlign: 'left'
-              }}
-              animate={{
-                backgroundColor: activeNavigation === item.name ? isDarkMode ? 'rgba(10, 10, 10, 1)' : 'white' : 'transparent',
-                boxShadow: activeNavigation === item.name ? '0px 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
-                borderWidth: activeNavigation === item.name ? '1px' : '0px'
-              }}
-              transition={{
-                duration: 0.3,
-                ease: [0.4, 0, 0.2, 1]
-              }}
+            {systemItems.map(item => <div key={item.name} style={{ position: 'relative' }}
+              onMouseEnter={() => isSidebarCollapsed && setHoveredNavItem(item.name)}
+              onMouseLeave={() => setHoveredNavItem(null)}
             >
+              <motion.button
+                onClick={() => {
+                  playClickSound();
+                  setActiveNavigation(item.name);
+                }}
+                whileHover={{ scale: 1.02, x: isSidebarCollapsed ? 0 : 2 }}
+                whileTap={{ scale: 0.98 }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: isSidebarCollapsed ? '10px' : '8px 12px',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  backgroundColor: 'transparent',
+                  boxShadow: 'none',
+                  borderWidth: '0px',
+                  borderStyle: 'solid',
+                  borderColor: colors.border,
+                  width: isSidebarCollapsed ? '44px' : '100%',
+                  justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
+                  textAlign: 'left',
+                }}
+                animate={{
+                  backgroundColor: activeNavigation === item.name ? isDarkMode ? 'rgba(10, 10, 10, 1)' : 'white' : 'transparent',
+                  boxShadow: activeNavigation === item.name ? '0px 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                  borderWidth: activeNavigation === item.name ? '1px' : '0px'
+                }}
+                transition={{
+                  duration: 0.3,
+                  ease: [0.4, 0, 0.2, 1]
+                }}
+              >
                 <motion.img
                   src={item.icon}
-                  style={{
-                    width: '16px'
-                  }}
+                  style={{ width: '16px', flexShrink: 0 }}
                   alt={item.name}
                   animate={{
                     opacity: activeNavigation === item.name ? 1 : 0.6,
                     filter: getIconFilter(activeNavigation === item.name)
                   }}
-                  transition={{
-                    duration: 0.2,
-                    ease: [0.4, 0, 0.2, 1]
-                  }}
+                  transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
                 />
-                <motion.span
-                  style={{
-              fontSize: '14px',
-              fontWeight: 500,
-              fontFamily: '"Geist", sans-serif'
-                  }}
-                  animate={{
-                    color: activeNavigation === item.name ? isDarkMode ? colors.white : 'rgba(10, 10, 10, 1)' : colors.textMuted
-                  }}
-                  transition={{
-                    duration: 0.2,
-                    ease: [0.4, 0, 0.2, 1]
-                  }}
-                >
-                  {item.name}
-                </motion.span>
-              </motion.button>)}
+                {!isSidebarCollapsed && (
+                  <motion.span
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      fontFamily: '"Geist", sans-serif',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                    }}
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: 'auto' }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                  >
+                    <motion.span
+                      animate={{
+                        color: activeNavigation === item.name ? isDarkMode ? colors.white : 'rgba(10, 10, 10, 1)' : colors.textMuted
+                      }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {item.name}
+                    </motion.span>
+                  </motion.span>
+                )}
+              </motion.button>
+              <AnimatePresence>
+                {isSidebarCollapsed && hoveredNavItem === item.name && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -4 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -4 }}
+                    transition={{ duration: 0.15 }}
+                    style={{
+                      position: 'absolute',
+                      left: '52px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      backgroundColor: isDarkMode ? 'rgba(39, 39, 42, 1)' : 'rgba(10, 10, 10, 1)',
+                      color: 'rgba(255, 255, 255, 1)',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      fontFamily: '"Geist", sans-serif',
+                      whiteSpace: 'nowrap',
+                      zIndex: 100,
+                      pointerEvents: 'none',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    }}
+                  >
+                    {item.name}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>)}
           </div>
         </div>
 
         <footer style={{
-        padding: '8px',
+        padding: isSidebarCollapsed ? '8px 4px' : '8px',
         borderTop: `1px solid ${colors.border}`
       }}>
+          {/* Dark Mode Toggle */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: isSidebarCollapsed ? 'center' : 'space-between',
+              padding: isSidebarCollapsed ? '6px 0' : '8px 8px 6px',
+              marginBottom: '4px',
+            }}
+          >
+            {!isSidebarCollapsed && (
+              <motion.span
+                style={{
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  color: colors.textSecondary,
+                  fontFamily: '"Geist", sans-serif',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                }}
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: 'auto' }}
+                exit={{ opacity: 0, width: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                Theme
+              </motion.span>
+            )}
+            <motion.button
+              onClick={() => {
+                playClickSound();
+                setIsDarkMode(prev => !prev);
+              }}
+              style={{
+                width: '48px',
+                height: '26px',
+                borderRadius: '13px',
+                border: 'none',
+                cursor: 'pointer',
+                position: 'relative',
+                padding: 0,
+                overflow: 'hidden',
+                flexShrink: 0,
+              }}
+              animate={{
+                backgroundColor: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'rgba(228, 228, 231, 1)',
+              }}
+              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <motion.div
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '10px',
+                  position: 'absolute',
+                  top: '3px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                animate={{
+                  left: isDarkMode ? '25px' : '3px',
+                  backgroundColor: isDarkMode ? 'rgba(250, 250, 250, 1)' : 'rgba(255, 255, 255, 1)',
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 500,
+                  damping: 30,
+                }}
+              >
+                <AnimatePresence mode="wait">
+                  {isDarkMode ? (
+                    <motion.div
+                      key="moon"
+                      initial={{ rotate: -90, scale: 0, opacity: 0 }}
+                      animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                      exit={{ rotate: 90, scale: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <Moon size={11} color="rgba(10, 10, 10, 1)" strokeWidth={2.5} />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="sun"
+                      initial={{ rotate: 90, scale: 0, opacity: 0 }}
+                      animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                      exit={{ rotate: -90, scale: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <Sun size={11} color="rgba(10, 10, 10, 1)" strokeWidth={2.5} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            </motion.button>
+          </div>
+
           <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
           padding: '8px',
           borderRadius: '6px',
-          cursor: 'pointer'
+          cursor: 'pointer',
+          justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
         }}>
             <div style={{
             width: '32px',
             height: '32px',
             borderRadius: '10px',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            flexShrink: 0,
           }}>
               <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/dc02994b-7128-4082-bda2-be088cdd50d9.png" style={{
               width: '100%',
@@ -1889,26 +2258,41 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
               objectFit: 'cover'
             }} alt="Avatar" />
             </div>
-            <div style={{
-            flex: 1
-          }}>
-              <div style={{
-              color: colors.textPrimary,
-              fontSize: '14px',
-              fontWeight: 500
-            }}>{isDarkMode ? 'Anmol Education' : 'Shadcn'}</div>
-              <div style={{
-              color: colors.textSecondary,
-              fontSize: '12px',
-              fontWeight: 300
-            }}>arthur@alignui.com</div>
-            </div>
-            <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/125d49d8-142b-42e6-9e68-672689aeaf70.svg" style={{
-            width: '16px'
-          }} />
+            {!isSidebarCollapsed && (
+              <>
+                <motion.div
+                  style={{ flex: 1, overflow: 'hidden' }}
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: 'auto' }}
+                  exit={{ opacity: 0, width: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div style={{
+                    color: colors.textPrimary,
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    whiteSpace: 'nowrap',
+                  }}>{isDarkMode ? 'Anmol Education' : 'Shadcn'}</div>
+                  <div style={{
+                    color: colors.textSecondary,
+                    fontSize: '12px',
+                    fontWeight: 300,
+                    whiteSpace: 'nowrap',
+                  }}>arthur@alignui.com</div>
+                </motion.div>
+                <motion.img
+                  src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/125d49d8-142b-42e6-9e68-672689aeaf70.svg"
+                  style={{ width: '16px', flexShrink: 0 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                />
+              </>
+            )}
           </div>
         </footer>
-      </aside>
+      </motion.aside>
 
       {/* Main Content */}
       <main
@@ -1921,7 +2305,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
       >
         {activeNavigation === 'Commissions' ? (
           <>
-            {/* Commissions Header */}
+            {/* Commissions Header - pixel perfect per Figma */}
             <header style={{
               height: '56px',
               padding: '0 24px',
@@ -1931,68 +2315,64 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
               borderBottom: `1px solid ${colors.border}`,
               backgroundColor: isDarkMode ? 'rgba(23, 23, 23, 1)' : 'rgba(250, 250, 250, 1)'
             }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '16px'
-              }}>
-                <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/7535b31f-4722-4f37-b3f2-a80994c6c8e2.svg" style={{
-                  width: '20px'
-                }} alt="back" />
-                <div style={{
-                  height: '16px',
-                  borderLeft: `1px solid ${colors.border}`
-                }} />
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  <span style={{
-                    fontSize: '14px',
-                    color: colors.textSecondary,
-                    fontFamily: '"Geist Mono"',
-                    textTransform: 'uppercase'
-                  }}>Dashboard</span>
-                  <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/42fc4aca-b2d6-4358-bd46-3ec69e3c9773.svg" style={{
-                    width: '14px'
-                  }} />
-                  <span style={{
-                    fontSize: '14px',
-                    color: colors.textPrimary,
-                    fontFamily: '"Geist Mono"',
-                    textTransform: 'uppercase'
-                  }}>Commissions</span>
-                </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <Home size={20} style={{ color: colors.textPrimary }} />
+                <span style={{
+                  fontSize: '14px',
+                  color: colors.textPrimary,
+                  fontFamily: '"Geist Mono"',
+                  textTransform: 'uppercase',
+                  fontWeight: 700
+                }}>Commissions</span>
               </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '16px'
-              }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <button style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
-                  padding: '6px 12px',
+                  padding: '8px 12px',
                   border: `1px solid ${colors.border}`,
                   borderRadius: '8px',
                   background: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'white',
+                  color: colors.textPrimary,
+                  fontSize: '14px',
+                  fontWeight: 500,
                   cursor: 'pointer'
                 }}>
-                  <img src={isDarkMode ? "https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/a7aea9d4-4862-4777-a667-d1f47c0a09a6.svg" : "https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/515ca86f-0c62-489e-ac2f-446ec51a901e.svg"} style={{
-                    width: '20px'
-                  }} />
-                  <span style={{
-                    color: isDarkMode ? 'white' : 'rgba(10, 10, 10, 1)',
-                    fontSize: '14px',
-                    fontWeight: 500
-                  }}>Export</span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Export
                 </button>
+                <div style={{ display: 'flex', alignItems: 'stretch', borderRadius: '8px', overflow: 'hidden', boxShadow: '0px 1px 2px rgba(14, 18, 27, 0.24)' }}>
+                  <button style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 14px',
+                    border: 'none',
+                    background: 'rgba(12, 99, 248, 1)',
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    cursor: 'pointer'
+                  }}>
+                    <Plus size={18} />
+                    Add Lead
+                  </button>
+                  <button style={{
+                    padding: '8px 6px',
+                    border: 'none',
+                    borderLeft: '1px solid rgba(255,255,255,0.3)',
+                    background: 'rgba(12, 99, 248, 1)',
+                    color: 'white',
+                    cursor: 'pointer'
+                  }}>
+                    <ChevronDown size={16} />
+                  </button>
+                </div>
               </div>
             </header>
 
-            {/* Filters */}
+            {/* Search and Filters */}
             <div style={{
               padding: '16px 24px',
               backgroundColor: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'white',
@@ -2001,21 +2381,47 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
               gap: '16px',
               borderBottom: `1px solid ${colors.border}`
             }}>
-              {/* Status Filter */}
-              <div style={{
-                position: 'relative'
-              }}>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => {
-                    setStatusFilter(e.target.value);
-                    setCommissionsPage(1);
-                  }}
+              <div style={{ flex: 1, position: 'relative', maxWidth: '400px' }}>
+                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: colors.textSecondary }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search Commisions"
+                  value={commissionsSearch}
+                  onChange={(e) => { setCommissionsSearch(e.target.value); setCommissionsPage(1); }}
                   style={{
-                    padding: '6px 32px 6px 12px',
+                    width: '100%',
+                    padding: '8px 80px 8px 36px',
                     border: `1px solid ${colors.border}`,
                     borderRadius: '8px',
-                    background: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'white',
+                    background: colors.inputBg,
+                    color: colors.textPrimary,
+                    fontSize: '14px',
+                    outline: 'none'
+                  }}
+                />
+                <span style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  background: isDarkMode ? 'rgba(38, 38, 38, 1)' : 'rgba(243, 244, 246, 1)',
+                  fontSize: '11px',
+                  color: colors.textMuted
+                }}>⌘K</span>
+              </div>
+              <div style={{ position: 'relative' }}>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => { setStatusFilter(e.target.value); setCommissionsPage(1); }}
+                  style={{
+                    padding: '8px 32px 8px 12px',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '8px',
+                    background: colors.inputBg,
                     color: colors.textPrimary,
                     fontSize: '14px',
                     cursor: 'pointer',
@@ -2028,52 +2434,34 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                   <option value="Paid">Paid</option>
                   <option value="Partially_paid">Partially_paid</option>
                   <option value="Unpaid">Unpaid</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Rejected">Rejected</option>
                 </select>
-                <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/bdac8b93-a7aa-419c-bf92-50e0ad68ec5c.svg" style={{
-            position: 'absolute',
-                  right: '8px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: '16px',
-            pointerEvents: 'none'
-          }} />
+                <ChevronDown size={16} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.7 }} />
               </div>
-
-              {/* Booking Type Filter */}
-            <div style={{
-                position: 'relative'
-              }}>
+              <div style={{ position: 'relative' }}>
                 <select
                   value={bookingTypeFilter}
-                  onChange={(e) => {
-                    setBookingTypeFilter(e.target.value);
-                    setCommissionsPage(1);
-                  }}
+                  onChange={(e) => { setBookingTypeFilter(e.target.value); setCommissionsPage(1); }}
                   style={{
-                    padding: '6px 32px 6px 12px',
+                    padding: '8px 32px 8px 12px',
                     border: `1px solid ${colors.border}`,
                     borderRadius: '8px',
-                    background: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'white',
+                    background: colors.inputBg,
                     color: colors.textPrimary,
                     fontSize: '14px',
                     cursor: 'pointer',
                     appearance: 'none',
                     outline: 'none',
-                    minWidth: '140px'
+                    minWidth: '160px'
                   }}
                 >
                   <option value="">Booking Type</option>
                   <option value="Advance">Advance</option>
                   <option value="Booking">Booking</option>
+                  <option value="One time Payment">One time Payment</option>
                 </select>
-                <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/bdac8b93-a7aa-419c-bf92-50e0ad68ec5c.svg" style={{
-                  position: 'absolute',
-                  right: '8px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: '16px',
-                  pointerEvents: 'none'
-                }} />
+                <ChevronDown size={16} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.7 }} />
               </div>
             </div>
 
@@ -2101,136 +2489,64 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                   <thead>
                     <tr style={{
                       backgroundColor: isDarkMode ? 'rgba(23, 23, 23, 1)' : 'rgba(250, 250, 250, 1)',
-                      borderBottom: `1px solid ${colors.border}`
+                      borderBottom: `2px solid ${colors.border}`
                     }}>
-                      <th style={{
-                        textAlign: 'left',
-                        padding: '12px 24px',
-                        fontSize: '13px',
-                        color: colors.textSecondary,
-                        fontFamily: '"Geist Mono"',
-                        fontWeight: 500
-                      }}>PO NUMBER</th>
-                      <th style={{
-                        textAlign: 'left',
-                        padding: '12px 8px',
-                        fontSize: '13px',
-                        color: colors.textSecondary,
-                        fontFamily: '"Geist Mono"',
-                        fontWeight: 500
-                      }}>BOOKING TYPE</th>
-                      <th style={{
-                        textAlign: 'left',
-                        padding: '12px 8px',
-                        fontSize: '13px',
-                        color: colors.textSecondary,
-                        fontFamily: '"Geist Mono"',
-                        fontWeight: 500
-                      }}>DATE</th>
-                      <th style={{
-                        textAlign: 'left',
-                        padding: '12px 8px',
-                        fontSize: '13px',
-                        color: colors.textSecondary,
-                        fontFamily: '"Geist Mono"',
-                        fontWeight: 500
-                      }}>STATUS</th>
-                      <th style={{
-                        textAlign: 'right',
-                        padding: '12px 8px',
-                        fontSize: '13px',
-                        color: colors.textSecondary,
-                        fontFamily: '"Geist Mono"',
-                        fontWeight: 500
-                      }}>AMOUNT</th>
-                      <th style={{
-                        textAlign: 'right',
-                        padding: '12px 8px',
-                        fontSize: '13px',
-                        color: colors.textSecondary,
-                        fontFamily: '"Geist Mono"',
-                        fontWeight: 500
-                      }}>AMOUNT DUE</th>
-                      <th style={{
-                        textAlign: 'right',
-                        padding: '12px 24px',
-                        fontSize: '13px',
-                        color: colors.textSecondary,
-                        fontFamily: '"Geist Mono"',
-                        fontWeight: 500
-                      }}>ACTION</th>
+                      <th style={{ textAlign: 'left', padding: '12px 24px', fontSize: '12px', color: colors.textSecondary, fontFamily: '"Geist Mono"', fontWeight: 600, textTransform: 'uppercase' }}>PO NUMBER</th>
+                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '12px', color: colors.textSecondary, fontFamily: '"Geist Mono"', fontWeight: 600, textTransform: 'uppercase' }}>BOOKING TYPE</th>
+                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '12px', color: colors.textSecondary, fontFamily: '"Geist Mono"', fontWeight: 600, textTransform: 'uppercase' }}>
+                        <button type="button" onClick={() => handleCommissionsSort('createdOn')} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'inherit', fontFamily: 'inherit', fontWeight: 'inherit', fontSize: 'inherit', textTransform: 'inherit' }}>
+                          CREATED ON
+                          <ArrowUpDown size={14} style={{ opacity: commissionsSortBy === 'createdOn' ? 1 : 0.5 }} />
+                        </button>
+                      </th>
+                      <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '12px', color: colors.textSecondary, fontFamily: '"Geist Mono"', fontWeight: 600, textTransform: 'uppercase' }}>STATUS</th>
+                      <th style={{ textAlign: 'right', padding: '12px 16px', fontSize: '12px', color: colors.textSecondary, fontFamily: '"Geist Mono"', fontWeight: 600, textTransform: 'uppercase' }}>
+                        <button type="button" onClick={() => handleCommissionsSort('amount')} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginLeft: 'auto', background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'inherit', fontFamily: 'inherit', fontWeight: 'inherit', fontSize: 'inherit', textTransform: 'inherit' }}>
+                          AMOUNT
+                          <ArrowUpDown size={14} style={{ opacity: commissionsSortBy === 'amount' ? 1 : 0.5 }} />
+                        </button>
+                      </th>
+                      <th style={{ textAlign: 'right', padding: '12px 16px', fontSize: '12px', color: colors.textSecondary, fontFamily: '"Geist Mono"', fontWeight: 600, textTransform: 'uppercase' }}>
+                        <button type="button" onClick={() => handleCommissionsSort('amountDue')} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginLeft: 'auto', background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'inherit', fontFamily: 'inherit', fontWeight: 'inherit', fontSize: 'inherit', textTransform: 'inherit' }}>
+                          AMOUNT DUE
+                          <ArrowUpDown size={14} style={{ opacity: commissionsSortBy === 'amountDue' ? 1 : 0.5 }} />
+                        </button>
+                      </th>
+                      <th style={{ textAlign: 'left', padding: '12px 24px', fontSize: '12px', color: colors.textSecondary, fontFamily: '"Geist Mono"', fontWeight: 600, textTransform: 'uppercase' }}>ACTIONS</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {currentCommissionsData.map((commission, i) => <motion.tr
-                      key={i}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{
-                        duration: 0.3,
-                        delay: i * 0.03,
-                        ease: [0.4, 0, 0.2, 1]
-                      }}
-                      style={{
-                        borderBottom: `1px solid ${colors.border}`
-                      }}
-                    >
-                      <td style={{
-                        padding: '8px 24px',
-                        fontSize: '14px',
-              fontWeight: 500,
-                        color: colors.textPrimary
-                      }}>{commission.poNumber}</td>
-                      <td style={{
-                        padding: '8px 8px',
-                        fontSize: '14px',
-                        color: colors.textPrimary
-                      }}>{commission.bookingType}</td>
-                      <td style={{
-                        padding: '8px 8px',
-                        fontSize: '14px',
-              color: colors.textPrimary,
-                        fontFamily: '"Geist Mono"'
-                      }}>{commission.date}</td>
-                      <td style={{
-                        padding: '8px 8px'
-                      }}>{getStatusBadge(commission.status)}</td>
-                      <td style={{
-                        padding: '8px 8px',
-                        textAlign: 'right',
-                        fontSize: '14px',
-                        color: colors.textPrimary,
-                        fontFamily: '"Geist Mono"'
-                      }}>{commission.amount}</td>
-                      <td style={{
-                        padding: '8px 8px',
-                        textAlign: 'right',
-                        fontSize: '14px',
-                        color: colors.textPrimary,
-                        fontFamily: '"Geist Mono"'
-                      }}>{commission.amountDue}</td>
-                      <td style={{
-                        padding: '8px 24px',
-                        textAlign: 'right'
-                      }}>
-                        <button style={{
-                          padding: '4px 12px',
-                          border: `1px solid ${colors.accent}`,
-                          borderRadius: '6px',
-                          background: 'transparent',
-                          cursor: 'pointer',
-                          fontSize: '12px',
-                          fontWeight: 500,
-                          color: colors.accent
-                        }}>See Details</button>
-                      </td>
-                    </motion.tr>)}
+                    {currentCommissionsData.map((commission, i) => (
+                      <motion.tr
+                        key={commission.poNumber}
+                        layout
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{
+                          duration: 0.3,
+                          delay: i * 0.03,
+                          ease: [0.4, 0, 0.2, 1],
+                          layout: { duration: 0.25, ease: [0.4, 0, 0.2, 1] }
+                        }}
+                        style={{ borderBottom: `1px solid ${colors.border}` }}
+                      >
+                        <td style={{ padding: '12px 24px', fontSize: '14px', fontWeight: 500, color: colors.textPrimary }}>{commission.poNumber}</td>
+                        <td style={{ padding: '12px 16px', fontSize: '14px', color: colors.textPrimary }}>{commission.bookingType}</td>
+                        <td style={{ padding: '12px 16px', fontSize: '14px', color: colors.textPrimary, fontFamily: '"Geist Mono"' }}>{formatCommissionDate(commission.date)}</td>
+                        <td style={{ padding: '12px 16px' }}>{getStatusBadge(commission.status)}</td>
+                        <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: '14px', color: colors.textPrimary, fontFamily: '"Geist Mono"' }}>{commission.amount.replace(/(\.\d)$/, (_, m) => m + '0')}</td>
+                        <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: '14px', color: colors.textPrimary, fontFamily: '"Geist Mono"' }}>{commission.amountDue.replace(/(\.\d)$/, (_, m) => m + '0')}</td>
+                        <td style={{ padding: '12px 24px', textAlign: 'left' }}>
+                          <button type="button" onClick={() => { setSelectedCommission(commission); setCommissionDetailsOpen(true); }} style={{ background: 'none', border: 'none', padding: 0, fontSize: '14px', fontWeight: 500, color: colors.accent, cursor: 'pointer', textDecoration: 'none' }}>SEE DETAILS</button>
+                        </td>
+                      </motion.tr>
+                    ))}
                   </tbody>
                 </table>
               </motion.div>
             </AnimatePresence>
 
-            {/* Commissions Pagination Footer */}
+            {/* Commissions Pagination Footer - same style as Leads */}
             <footer style={{
               height: '68px',
               padding: '0 24px',
@@ -2241,14 +2557,10 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
               marginTop: 'auto',
               backgroundColor: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'rgba(255, 255, 255, 1)'
             }}>
-              <span style={{
-                fontSize: '14px',
-                color: colors.textSecondary
-              }}>Showing {commissionsStartItem} to {commissionsEndItem} of {commissionsTotalItems} entries</span>
-              <div style={{
-                display: 'flex',
-              gap: '4px'
-            }}>
+              <span style={{ fontSize: '14px', color: colors.textSecondary }}>
+                Showing {commissionsStartItem} to {commissionsEndItem} of {commissionsTotalItems} entries
+              </span>
+              <div style={{ display: 'flex', gap: '4px' }}>
                 <button onClick={handleCommissionsPrevious} disabled={commissionsPage === 1} style={{
                   padding: '6px 12px',
                   border: `1px solid ${colors.border}`,
@@ -2260,28 +2572,28 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                   gap: '6px',
                   opacity: commissionsPage === 1 ? 0.5 : 1
                 }}>
-                  <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/01c076b6-3528-475d-af10-7b71b96e0863.svg" style={{
-                    width: '16px'
-                  }} />
-                  <span style={{
-                    color: colors.textPrimary,
-                    fontSize: '14px',
-                    fontWeight: 500
-                  }}>Previous</span>
+                  <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/01c076b6-3528-475d-af10-7b71b96e0863.svg" style={{ width: '16px' }} alt="prev" />
+                  <span style={{ color: colors.textPrimary, fontSize: '14px', fontWeight: 500 }}>Previous</span>
                 </button>
-                {getCommissionsPageNumbers().map(page => <button key={page} onClick={() => handleCommissionsPageClick(page)} style={{
-                  width: '28px',
-                  height: '28px',
-                  border: page === commissionsPage ? `1px solid ${colors.accent}` : 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-              fontWeight: 500,
-                  backgroundColor: page === commissionsPage ? isDarkMode ? colors.white : 'rgba(237, 243, 255, 1)' : 'transparent',
-                  color: page === commissionsPage ? colors.accent : colors.textPrimary
-                }}>
-                  {page === -1 ? '...' : page}
-                </button>)}
+                {getCommissionsPageNumbers().map(page => (
+                  <button
+                    key={page}
+                    onClick={() => handleCommissionsPageClick(page)}
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      border: page === commissionsPage ? `1px solid ${colors.accent}` : 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      backgroundColor: page === commissionsPage ? (isDarkMode ? colors.white : 'rgba(237, 243, 255, 1)') : 'transparent',
+                      color: page === commissionsPage ? colors.accent : colors.textPrimary
+                    }}
+                  >
+                    {page === -1 ? '...' : page}
+                  </button>
+                ))}
                 <button onClick={handleCommissionsNext} disabled={commissionsPage === commissionsTotalPages} style={{
                   padding: '6px 12px',
                   border: `1px solid ${colors.border}`,
@@ -2293,17 +2605,461 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                   gap: '6px',
                   opacity: commissionsPage === commissionsTotalPages ? 0.5 : 1
                 }}>
-                  <span style={{
-              color: colors.textPrimary,
-                    fontSize: '14px',
-                    fontWeight: 500
-                  }}>Next</span>
-                  <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/607c4c87-4637-410f-bdea-5d4899aac524.svg" style={{
-                    width: '16px'
-                  }} />
+                  <span style={{ color: colors.textPrimary, fontSize: '14px', fontWeight: 500 }}>Next</span>
+                  <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/607c4c87-4637-410f-bdea-5d4899aac524.svg" style={{ width: '16px' }} alt="next" />
                 </button>
               </div>
             </footer>
+
+            {/* Commission details overlay + right sidebar */}
+            {commissionDetailsOpen && selectedCommission && (
+              <AnimatePresence>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  style={{
+                    position: 'fixed',
+                    inset: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                    zIndex: 1000,
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => { setCommissionDetailsOpen(false); setSelectedCommission(null); }}
+                />
+                <motion.div
+                  initial={{ x: '100%' }}
+                  animate={{ x: 0 }}
+                  exit={{ x: '100%' }}
+                  transition={{ type: 'tween', duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                  style={{
+                    position: 'fixed',
+                    top: 16,
+                    right: 16,
+                    bottom: 16,
+                    width: '420px',
+                    maxWidth: 'calc(100vw - 32px)',
+                    backgroundColor: isDarkMode ? 'rgba(23, 23, 23, 1)' : 'rgba(255, 255, 255, 1)',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: 20,
+                    zIndex: 1001,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden',
+                    boxShadow: '-4px 0 24px rgba(0,0,0,0.12)'
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Sidebar header */}
+                  <div style={{ padding: '20px 24px', borderBottom: `1px solid ${colors.border}`, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <button type="button" style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer', color: colors.textSecondary }} aria-label="Previous"><ChevronLeft size={20} /></button>
+                        <span style={{ fontSize: '18px', fontWeight: 700, color: colors.textPrimary }}>PO #{selectedCommission.poNumber}</span>
+                        <button type="button" style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer', color: colors.textSecondary }} aria-label="Next"><ChevronRight size={20} /></button>
+                      </div>
+                      <div style={{ fontSize: '13px', color: colors.textSecondary }}>{formatCommissionDate(selectedCommission.date)}</div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        backgroundColor: (selectedCommission.status === 'Paid' || selectedCommission.status === 'Approved') ? 'rgba(22, 163, 74, 0.12)' : selectedCommission.status === 'Partially_paid' ? 'rgba(227, 146, 25, 0.2)' : selectedCommission.status === 'Rejected' || selectedCommission.status === 'Unpaid' ? 'rgba(224, 52, 52, 0.12)' : 'rgba(227, 146, 25, 0.2)',
+                        color: (selectedCommission.status === 'Paid' || selectedCommission.status === 'Approved') ? 'rgba(22, 163, 74, 1)' : selectedCommission.status === 'Partially_paid' ? 'rgba(217, 119, 6, 1)' : selectedCommission.status === 'Rejected' || selectedCommission.status === 'Unpaid' ? 'rgba(220, 38, 38, 1)' : 'rgba(217, 119, 6, 1)',
+                        fontSize: '12px',
+                        fontWeight: 600
+                      }}>
+                        {(selectedCommission.status === 'Paid' || selectedCommission.status === 'Approved') && <Check size={14} />}
+                        {selectedCommission.status.toUpperCase()}
+                      </span>
+                      <button type="button" onClick={() => { setCommissionDetailsOpen(false); setSelectedCommission(null); }} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer', color: colors.textSecondary }} aria-label="Close"><X size={20} /></button>
+                    </div>
+                  </div>
+
+                  {/* Order summary */}
+                  <div style={{ padding: '20px 24px', borderBottom: `1px solid ${colors.border}` }}>
+                    <div style={{ fontSize: '11px', fontWeight: 600, color: colors.textSecondary, fontFamily: '"Geist Mono"', textTransform: 'uppercase', marginBottom: '12px' }}>Order Summary</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                        <span style={{ color: colors.textSecondary }}>Total Amount</span>
+                        <span style={{ color: colors.textPrimary, fontWeight: 600 }}>$478.80</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                        <span style={{ color: colors.textSecondary }}>Amount Paid</span>
+                        <span style={{ color: colors.textPrimary, fontWeight: 600 }}>$79.80</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                        <span style={{ color: colors.textSecondary }}>Amount Due</span>
+                        <span style={{ color: colors.textPrimary, fontWeight: 600 }}>{selectedCommission.amountDue}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tabs */}
+                  <div style={{ display: 'flex', borderBottom: `1px solid ${colors.border}`, padding: '0 24px' }}>
+                    <button type="button" onClick={() => setCommissionDetailsTab('booking')} style={{
+                      padding: '12px 0',
+                      marginRight: '24px',
+                      border: 'none',
+                      background: 'none',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: commissionDetailsTab === 'booking' ? colors.accent : colors.textSecondary,
+                      borderBottom: commissionDetailsTab === 'booking' ? `2px solid ${colors.accent}` : '2px solid transparent',
+                      marginBottom: '-1px'
+                    }}>Booking Details</button>
+                    <button type="button" onClick={() => setCommissionDetailsTab('payment')} style={{
+                      padding: '12px 0',
+                      border: 'none',
+                      background: 'none',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: commissionDetailsTab === 'payment' ? colors.accent : colors.textSecondary,
+                      borderBottom: commissionDetailsTab === 'payment' ? `2px solid ${colors.accent}` : '2px solid transparent',
+                      marginBottom: '-1px'
+                    }}>Payment Logs</button>
+                  </div>
+
+                  {/* Tab content */}
+                  <div style={{ flex: 1, overflow: 'auto', padding: '20px 24px' }}>
+                    {commissionDetailsTab === 'booking' ? (
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                        <thead>
+                          <tr style={{ borderBottom: `2px solid ${colors.border}` }}>
+                            <th style={{ textAlign: 'left', padding: '8px 0', color: colors.textSecondary, fontWeight: 600, fontFamily: '"Geist Mono"', textTransform: 'uppercase', fontSize: '11px' }}>Booking ID</th>
+                            <th style={{ textAlign: 'left', padding: '8px 0', color: colors.textSecondary, fontWeight: 600, fontFamily: '"Geist Mono"', textTransform: 'uppercase', fontSize: '11px' }}>Student Name</th>
+                            <th style={{ textAlign: 'right', padding: '8px 0', color: colors.textSecondary, fontWeight: 600, fontFamily: '"Geist Mono"', textTransform: 'uppercase', fontSize: '11px' }}>Your Commission</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
+                            <td style={{ padding: '10px 0', color: colors.textPrimary }}>{selectedCommission.poNumber}</td>
+                            <td style={{ padding: '10px 0', color: colors.textPrimary }}>{selectedCommission.bookingType}</td>
+                            <td style={{ padding: '10px 0', textAlign: 'right', color: colors.textPrimary }}>{selectedCommission.amount.replace(/(\.\d)$/, (_, m) => m + '0')}</td>
+                          </tr>
+                          <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
+                            <td style={{ padding: '10px 0', color: colors.textPrimary }}>570</td>
+                            <td style={{ padding: '10px 0', color: colors.textPrimary }}>Booking</td>
+                            <td style={{ padding: '10px 0', textAlign: 'right', color: colors.textPrimary }}>USD 90.00</td>
+                          </tr>
+                          <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
+                            <td style={{ padding: '10px 0', color: colors.textPrimary }}>380</td>
+                            <td style={{ padding: '10px 0', color: colors.textPrimary }}>One time Payment</td>
+                            <td style={{ padding: '10px 0', textAlign: 'right', color: colors.textPrimary }}>USD 45.00</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {[
+                          { id: '#9876567', amount: '30.0GBP', date: '03/04/2025' },
+                          { id: '#1234567', amount: '45.5GBP', date: '15/05/2025' },
+                          { id: '#7654321', amount: '20.75GBP', date: '22/06/2025' },
+                          { id: '#2345678', amount: '55.0GBP', date: '10/07/2025' }
+                        ].map((log) => (
+                          <div
+                            key={log.id}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '14px 16px',
+                              border: `1px solid ${colors.border}`,
+                              borderRadius: '10px',
+                              backgroundColor: isDarkMode ? 'rgba(38, 38, 38, 0.5)' : 'rgba(250, 250, 250, 1)'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                              <span style={{ fontSize: '14px', fontWeight: 600, color: colors.textPrimary }}>{log.id}</span>
+                              <span style={{ fontSize: '14px', color: colors.textPrimary }}>{log.amount}</span>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: colors.textSecondary }}>
+                                <Calendar size={14} />
+                                {log.date}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '6px 12px',
+                                border: `1px solid ${colors.border}`,
+                                borderRadius: '8px',
+                                background: colors.cardBg,
+                                color: colors.textPrimary,
+                                fontSize: '13px',
+                                fontWeight: 500,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <Download size={14} />
+                              Download receipt
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            )}
+          </>
+        ) : activeNavigation === 'Listings' ? (
+          <>
+            {/* Listings Header */}
+            <header style={{
+              height: '56px',
+              padding: '0 24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderBottom: `1px solid ${colors.border}`,
+              backgroundColor: isDarkMode ? 'rgba(23, 23, 23, 1)' : 'rgba(250, 250, 250, 1)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/7535b31f-4722-4f37-b3f2-a80994c6c8e2.svg" style={{ width: '20px' }} alt="back" />
+                <div style={{ height: '16px', borderLeft: `1px solid ${colors.border}` }} />
+                <span style={{
+                  fontSize: '14px',
+                  color: colors.textPrimary,
+                  fontFamily: '"Geist Mono"',
+                  textTransform: 'uppercase',
+                  fontWeight: 600
+                }}>Listings</span>
+              </div>
+            </header>
+
+            <PageSection pageKey="Listings">
+              {/* Search and Filters */}
+              <div style={{
+                padding: '16px 24px',
+                backgroundColor: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'white',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                borderBottom: `1px solid ${colors.border}`
+              }}>
+                <div style={{
+                  flex: 1,
+                  position: 'relative',
+                  maxWidth: '400px'
+                }}>
+                  <span style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: colors.textSecondary
+                  }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Property Name"
+                    value={listingsPropertySearch}
+                    onChange={(e) => { setListingsPropertySearch(e.target.value); setListingsPage(1); }}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px 8px 36px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      background: colors.inputBg,
+                      color: colors.textPrimary,
+                      fontSize: '14px',
+                      outline: 'none'
+                    }}
+                  />
+                  <span style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    fontSize: '11px',
+                    color: colors.textMuted
+                  }}>⌘K</span>
+                </div>
+                <select
+                  value={listingsProviderFilter}
+                  onChange={(e) => { setListingsProviderFilter(e.target.value); setListingsPage(1); }}
+                  style={{
+                    padding: '8px 32px 8px 12px',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '8px',
+                    background: colors.inputBg,
+                    color: colors.textPrimary,
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    appearance: 'none',
+                    outline: 'none',
+                    minWidth: '160px'
+                  }}
+                >
+                  <option value="">Provider Name</option>
+                  <option value="A & O hostels">A & O hostels</option>
+                  <option value="Asset living">Asset living</option>
+                  <option value="True student">True student</option>
+                  <option value="City block">City block</option>
+                </select>
+                <select
+                  value={listingsRegionsFilter}
+                  onChange={(e) => { setListingsRegionsFilter(e.target.value); setListingsPage(1); }}
+                  style={{
+                    padding: '8px 32px 8px 12px',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '8px',
+                    background: colors.inputBg,
+                    color: colors.textPrimary,
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    appearance: 'none',
+                    outline: 'none',
+                    minWidth: '140px'
+                  }}
+                >
+                  <option value="">Regions (10)</option>
+                </select>
+              </div>
+
+              {/* Listings Table */}
+              <div style={{ flex: 1, overflow: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: `2px solid ${colors.border}`, backgroundColor: isDarkMode ? 'rgba(23, 23, 23, 1)' : 'rgba(250, 250, 250, 1)' }}>
+                      <th style={{ padding: '12px 24px', textAlign: 'left', width: '40px' }}>
+                        <input type="checkbox" style={{ cursor: 'pointer' }} />
+                      </th>
+                      <th style={{ padding: '12px 24px', color: colors.textSecondary, fontWeight: 600, textTransform: 'uppercase', fontFamily: '"Geist Mono"' }}>Property Name</th>
+                      <th style={{ padding: '12px 24px', color: colors.textSecondary, fontWeight: 600, textTransform: 'uppercase', fontFamily: '"Geist Mono"' }}>Provider Name</th>
+                      <th style={{ padding: '12px 24px', color: colors.textSecondary, fontWeight: 600, textTransform: 'uppercase', fontFamily: '"Geist Mono"' }}>Type</th>
+                      <th style={{ padding: '12px 24px', color: colors.textSecondary, fontWeight: 600, textTransform: 'uppercase', fontFamily: '"Geist Mono"' }}>Manage</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentListingsData.map((row, i) => (
+                      <tr key={i} style={{ borderBottom: `1px solid ${colors.border}` }}>
+                        <td style={{ padding: '12px 24px' }}>
+                          <input type="checkbox" style={{ cursor: 'pointer' }} />
+                        </td>
+                        <td style={{ padding: '12px 24px' }}>
+                          <button
+                            type="button"
+                            onClick={() => {}}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              padding: 0,
+                              color: colors.accent,
+                              fontSize: '14px',
+                              cursor: 'pointer',
+                              textAlign: 'left'
+                            }}
+                          >
+                            {row.propertyName}
+                          </button>
+                        </td>
+                        <td style={{ padding: '12px 24px', color: colors.textPrimary }}>{row.providerName}</td>
+                        <td style={{ padding: '12px 24px', color: colors.textPrimary }}>{row.type}</td>
+                        <td style={{ padding: '12px 24px' }}>
+                          <button
+                            type="button"
+                            onClick={() => {}}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              padding: 0,
+                              color: colors.accent,
+                              fontSize: '14px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            See details
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Listings Pagination */}
+              <footer style={{
+                padding: '16px 24px',
+                borderTop: `1px solid ${colors.border}`,
+                backgroundColor: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <span style={{ fontSize: '14px', color: colors.textSecondary }}>
+                  Showing {listingsDisplayTotal === 0 ? 0 : (listingsPage - 1) * listingsItemsPerPage + 1} to {Math.min(listingsPage * listingsItemsPerPage, listingsDisplayTotal)} of {listingsDisplayTotal} entries
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    onClick={() => setListingsPage((p) => Math.max(1, p - 1))}
+                    disabled={listingsPage === 1}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '6px 12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      background: colors.cardBg,
+                      color: colors.textPrimary,
+                      cursor: listingsPage === 1 ? 'not-allowed' : 'pointer',
+                      opacity: listingsPage === 1 ? 0.5 : 1
+                    }}
+                  >
+                    <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/125d49d8-142b-42e6-9e68-672689aeaf70.svg" style={{ width: '16px' }} alt="prev" />
+                    <span style={{ fontSize: '14px', fontWeight: 500 }}>Previous</span>
+                  </button>
+                  {[1, 2, 3, 4].map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => setListingsPage(n)}
+                      style={{
+                        padding: '6px 12px',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '8px',
+                        background: listingsPage === n ? colors.accent : colors.cardBg,
+                        color: listingsPage === n ? colors.white : colors.textPrimary,
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setListingsPage((p) => Math.min(listingsTotalPages, p + 1))}
+                    disabled={listingsPage === listingsTotalPages}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '6px 12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      background: colors.cardBg,
+                      color: colors.textPrimary,
+                      cursor: listingsPage === listingsTotalPages ? 'not-allowed' : 'pointer',
+                      opacity: listingsPage === listingsTotalPages ? 0.5 : 1
+                    }}
+                  >
+                    <span style={{ fontSize: '14px', fontWeight: 500 }}>Next</span>
+                    <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/607c4c87-4637-410f-bdea-5d4899aac524.svg" style={{ width: '16px' }} alt="next" />
+                  </button>
+                </div>
+              </footer>
+            </PageSection>
           </>
         ) : activeNavigation === 'Campaigns / Events' ? (
           <>
@@ -3909,7 +4665,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
           </>
         ) : activeNavigation === 'Dashboard' ? (
           <>
-            {/* Dashboard Header */}
+            {/* Dashboard Overview Header */}
             <header style={{
               height: '56px',
               padding: '0 24px',
@@ -3924,86 +4680,427 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                 alignItems: 'center',
                 gap: '16px'
               }}>
-                <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/7535b31f-4722-4f37-b3f2-a80994c6c8e2.svg" style={{
-                  width: '20px'
-                }} alt="back" />
-                <div style={{
-                  height: '16px',
-                  borderLeft: `1px solid ${colors.border}`
-                }} />
-                <div style={{
+                <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/7535b31f-4722-4f37-b3f2-a80994c6c8e2.svg" style={{ width: '20px' }} alt="back" />
+                <div style={{ height: '16px', borderLeft: `1px solid ${colors.border}` }} />
+                <span style={{
+                  fontSize: '14px',
+                  color: colors.textPrimary,
+                  fontFamily: '"Geist Mono"',
+                  textTransform: 'uppercase',
+                  fontWeight: 600
+                }}>Overview</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <button style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px'
+                  gap: '8px',
+                  padding: '8px 12px',
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  background: colors.cardBg,
+                  color: colors.textPrimary,
+                  fontSize: '14px',
+                  cursor: 'pointer'
                 }}>
-                  <span style={{
-                    fontSize: '14px',
-                    color: colors.textPrimary,
-                    fontFamily: '"Geist Mono"',
-                    textTransform: 'uppercase'
-                  }}>Dashboard</span>
-                </div>
+                  {dashboardDateRange}
+                  <ChevronDown size={16} />
+                </button>
+                <button style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 12px',
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  background: colors.cardBg,
+                  color: colors.textPrimary,
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}>
+                  <Calendar size={16} />
+                  Feb 04 – Feb 11, 2024
+                </button>
+                <button style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 12px',
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  background: colors.cardBg,
+                  color: colors.textPrimary,
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}>
+                  <Filter size={16} />
+                  Filters
+                </button>
               </div>
             </header>
 
             <PageSection pageKey="Dashboard">
-              {/* Empty State */}
               <div style={{
                 flex: 1,
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
                 gap: '24px',
-                padding: '48px'
+                padding: '24px',
+                overflow: 'auto'
               }}>
-                <div style={{
-                  width: '200px',
-                  height: '200px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  {processingAnimationData ? (
-                    <Lottie
-                      animationData={getProcessedAnimationData()}
-                      loop={true}
-                      autoplay={true}
+                {/* Metric Cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                  {[
+                    { label: 'BOOKINGS COMPLETED', value: '13', change: '-25%', trend: 'down', color: 'rgba(239, 68, 68, 1)' },
+                    { label: 'CANCELLED BOOKINGS', value: '13', change: '15%', trend: 'up', color: 'rgba(34, 197, 94, 1)' },
+                    { label: 'APP INSTALLS', value: '13', change: '-25%', trend: 'down', color: 'rgba(239, 68, 68, 1)' }
+                  ].map((card) => (
+                    <div
+                      key={card.label}
                       style={{
-                        width: '200px',
-                        height: '200px'
+                        padding: '20px',
+                        background: colors.cardBg,
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '12px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px'
                       }}
-                    />
-                  ) : (
-                    <div style={{
-                      width: '200px',
-                      height: '200px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: colors.textSecondary
-                    }}>
-                      Loading...
+                    >
+                      <span style={{ fontSize: '12px', color: colors.textSecondary, fontFamily: '"Geist Mono"', textTransform: 'uppercase' }}>
+                        {card.label}
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                        <span style={{ fontSize: '28px', fontWeight: 700, color: colors.textPrimary, fontFamily: '"Geist", sans-serif' }}>
+                          {card.value}
+                        </span>
+                        <span style={{ fontSize: '14px', color: card.color, fontWeight: 500 }}>
+                          {card.change}
+                          {card.trend === 'down' ? ' ↓' : ' ↑'}
+                        </span>
+                      </div>
                     </div>
-                  )}
+                  ))}
                 </div>
+
+                {/* Leads Upload Trend */}
                 <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '8px'
+                  padding: '20px',
+                  background: colors.cardBg,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '12px'
                 }}>
-                  <span style={{
-                    fontSize: '18px',
-                    fontWeight: 600,
-                    color: colors.textPrimary,
-                    fontFamily: '"Geist", sans-serif'
-                  }}>Metabase getting embedded soon</span>
-                  <span style={{
-                    fontSize: '14px',
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <span style={{ fontSize: '12px', color: colors.textSecondary, fontFamily: '"Geist Mono"', textTransform: 'uppercase' }}>
+                      LEADS UPLOAD TREND
+                    </span>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      {(['total', 'unique'] as const).map((view) => (
+                        <button
+                          key={view}
+                          onClick={() => setDashboardLeadsView(view)}
+                          style={{
+                            padding: '4px 12px',
+                            borderRadius: '8px',
+                            border: 'none',
+                            fontSize: '12px',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                            background: dashboardLeadsView === view ? (isDarkMode ? 'rgba(38, 38, 38, 1)' : 'rgba(245, 245, 245, 1)') : 'transparent',
+                            color: dashboardLeadsView === view ? colors.textPrimary : colors.textSecondary
+                          }}
+                        >
+                          {view === 'total' ? 'TOTAL LEADS' : 'UNIQUE LEADS'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{ height: '240px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={[
+                        { month: 'JAN', leads: 40 },
+                        { month: 'FEB', leads: 65 },
+                        { month: 'MAR', leads: 55 },
+                        { month: 'APR', leads: 80 },
+                        { month: 'MAY', leads: 90 },
+                        { month: 'JUN', leads: 75 }
+                      ]}>
+                        <defs>
+                          <linearGradient id="leadsGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="rgba(20, 184, 166, 0.4)" />
+                            <stop offset="100%" stopColor="rgba(20, 184, 166, 0)" />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke={colors.border} />
+                        <XAxis dataKey="month" tick={{ fontSize: 12, fill: colors.textSecondary }} axisLine={{ stroke: colors.border }} />
+                        <YAxis tick={{ fontSize: 12, fill: colors.textSecondary }} axisLine={{ stroke: colors.border }} />
+                        <Tooltip contentStyle={{ background: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: '8px' }} />
+                        <Area type="monotone" dataKey="leads" stroke="rgba(20, 184, 166, 1)" strokeWidth={2} fill="url(#leadsGradient)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  {/* Lost Reasons Donut */}
+                  <div style={{
+                    padding: '20px',
+                    background: colors.cardBg,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '12px'
+                  }}>
+                    <span style={{ fontSize: '12px', color: colors.textSecondary, fontFamily: '"Geist Mono"', textTransform: 'uppercase', display: 'block', marginBottom: '16px' }}>
+                      LOST REASONS
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                      <div style={{ width: '160px', height: '160px' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={[
+                                { name: 'Not a Student', value: 4, color: 'rgba(239, 68, 68, 1)' },
+                                { name: 'Supply Issue', value: 2, color: 'rgba(20, 184, 166, 1)' },
+                                { name: 'Not Reachable', value: 3, color: 'rgba(249, 115, 22, 1)' }
+                              ]}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={50}
+                              outerRadius={75}
+                              paddingAngle={2}
+                              dataKey="value"
+                            >
+                              <Cell fill="rgba(239, 68, 68, 1)" />
+                              <Cell fill="rgba(20, 184, 166, 1)" />
+                              <Cell fill="rgba(249, 115, 22, 1)" />
+                            </Pie>
+                            <Tooltip contentStyle={{ background: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: '8px' }} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div style={{ fontSize: '24px', fontWeight: 700, color: colors.textPrimary }}>9</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {['Not a Student', 'Supply Issue', 'Not Reachable'].map((name, i) => (
+                          <div key={name} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: colors.textSecondary }}>
+                            <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: ['rgba(239, 68, 68, 1)', 'rgba(20, 184, 166, 1)', 'rgba(249, 115, 22, 1)'][i] }} />
+                            {name}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bookings Completed Trend */}
+                  <div style={{
+                    padding: '20px',
+                    background: colors.cardBg,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '12px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                      <span style={{ fontSize: '12px', color: colors.textSecondary, fontFamily: '"Geist Mono"', textTransform: 'uppercase' }}>
+                        BOOKINGS COMPLETED TREND
+                      </span>
+                      <button style={{
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        border: `1px solid ${colors.border}`,
+                        background: colors.cardBg,
+                        color: colors.textSecondary,
+                        fontSize: '12px',
+                        cursor: 'pointer'
+                      }}>
+                        MONTHLY <ChevronDown size={12} />
+                      </button>
+                    </div>
+                    <div style={{ height: '200px' }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={[
+                          { month: 'Jan', bookings: 3 },
+                          { month: 'Feb', bookings: 4 },
+                          { month: 'Mar', bookings: 2 },
+                          { month: 'Apr', bookings: 0 },
+                          { month: 'May', bookings: 0 },
+                          { month: 'Jun', bookings: 1 },
+                          { month: 'Jul', bookings: 3 }
+                        ]} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={colors.border} vertical={false} />
+                          <XAxis dataKey="month" tick={{ fontSize: 12, fill: colors.textSecondary }} axisLine={{ stroke: colors.border }} />
+                          <YAxis tick={{ fontSize: 12, fill: colors.textSecondary }} axisLine={{ stroke: colors.border }} />
+                          <Tooltip contentStyle={{ background: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: '8px' }} />
+                          <Bar dataKey="bookings" fill="rgba(37, 99, 235, 0.8)" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Processing Leads Split */}
+                <div style={{
+                  padding: '20px',
+                  background: colors.cardBg,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '12px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '16px' }}>
+                    <span style={{ fontSize: '12px', color: colors.textSecondary, fontFamily: '"Geist Mono"', textTransform: 'uppercase' }}>
+                      PROCESSING LEADS SPLIT
+                    </span>
+                    <Info size={14} style={{ color: colors.textSecondary }} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {[
+                      { label: 'New', pct: 70, color: 'rgba(249, 115, 22, 1)' },
+                      { label: 'In Review', pct: 60, color: 'rgba(20, 184, 166, 1)' },
+                      { label: 'Qualified', pct: 45, color: 'rgba(37, 99, 235, 1)' },
+                      { label: 'Contacted', pct: 35, color: 'rgba(251, 191, 36, 1)' },
+                      { label: 'Follow Up', pct: 30, color: 'rgba(234, 179, 8, 1)' },
+                      { label: 'SEO', pct: 25, color: 'rgba(23, 23, 23, 1)' }
+                    ].map((row) => (
+                      <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ width: '100px', fontSize: '12px', color: colors.textPrimary }}>{row.label}</span>
+                        <div style={{ flex: 1, height: '24px', background: isDarkMode ? 'rgba(38, 38, 38, 1)' : 'rgba(245, 245, 245, 1)', borderRadius: '6px', overflow: 'hidden' }}>
+                          <div style={{ width: `${row.pct}%`, height: '100%', background: row.color, borderRadius: '6px', transition: 'width 0.3s ease' }} />
+                        </div>
+                        <span style={{ fontSize: '12px', color: colors.textSecondary }}>{row.pct}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Destination Countries - World Map placeholder */}
+                <div style={{
+                  padding: '20px',
+                  background: colors.cardBg,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '12px'
+                }}>
+                  <span style={{ fontSize: '12px', color: colors.textSecondary, fontFamily: '"Geist Mono"', textTransform: 'uppercase', display: 'block', marginBottom: '16px' }}>
+                    DESTINATION COUNTRIES OF BOOKINGS
+                  </span>
+                  <div style={{
+                    height: '280px',
+                    background: isDarkMode ? 'rgba(38, 38, 38, 0.5)' : 'rgba(245, 245, 245, 0.5)',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     color: colors.textSecondary,
-                    fontFamily: '"Geist", sans-serif'
-                  }}>Your analytics dashboard will appear here</span>
+                    fontSize: '14px'
+                  }}>
+                    World map (USA, Canada highlighted – 1+)
+                  </div>
+                </div>
+
+                {/* City Level Insights Table */}
+                <div style={{
+                  padding: '20px',
+                  background: colors.cardBg,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '12px'
+                }}>
+                  <span style={{ fontSize: '12px', color: colors.textSecondary, fontFamily: '"Geist Mono"', textTransform: 'uppercase', display: 'block', marginBottom: '16px' }}>
+                    CITY LEVEL INSIGHTS
+                  </span>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                      <thead>
+                        <tr style={{ borderBottom: `2px solid ${colors.border}` }}>
+                          <th style={{ textAlign: 'left', padding: '12px', color: colors.textSecondary, fontWeight: 600 }}>CITY</th>
+                          <th style={{ textAlign: 'left', padding: '12px', color: colors.textSecondary, fontWeight: 600 }}>TOTAL LEADS</th>
+                          <th style={{ textAlign: 'left', padding: '12px', color: colors.textSecondary, fontWeight: 600 }}>UNIQUE LEADS</th>
+                          <th style={{ textAlign: 'left', padding: '12px', color: colors.textSecondary, fontWeight: 600 }}>BOOKINGS</th>
+                          <th style={{ textAlign: 'left', padding: '12px', color: colors.textSecondary, fontWeight: 600 }}>CONVERSATION RATE</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[
+                          { city: 'London', country: 'UK', totalLeads: 120, uniqueLeads: 98, bookings: 12, rate: 12 },
+                          { city: 'Coffs Harbour', country: 'AU', totalLeads: 45, uniqueLeads: 40, bookings: 5, rate: 12 },
+                          { city: 'Cork', country: 'IE', totalLeads: 38, uniqueLeads: 35, bookings: 4, rate: 11 },
+                          { city: 'Aachen', country: 'DE', totalLeads: 28, uniqueLeads: 25, bookings: 3, rate: 12 },
+                          { city: 'Berlin', country: 'DE', totalLeads: 95, uniqueLeads: 82, bookings: 9, rate: 11 }
+                        ].map((row, i) => (
+                          <tr key={i} style={{ borderBottom: `1px solid ${colors.border}` }}>
+                            <td style={{ padding: '12px', color: colors.textPrimary }}>
+                              <span style={{ marginRight: '8px' }}>{row.country === 'UK' ? '🇬🇧' : row.country === 'AU' ? '🇦🇺' : row.country === 'IE' ? '🇮🇪' : '🇩🇪'}</span>
+                              {row.city}
+                            </td>
+                            <td style={{ padding: '12px', color: colors.textPrimary }}>{row.totalLeads}</td>
+                            <td style={{ padding: '12px', color: colors.textPrimary }}>{row.uniqueLeads}</td>
+                            <td style={{ padding: '12px', color: colors.textPrimary }}>{row.bookings}</td>
+                            <td style={{ padding: '12px', minWidth: '140px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <div style={{ flex: 1, height: '8px', background: isDarkMode ? 'rgba(38, 38, 38, 1)' : 'rgba(245, 245, 245, 1)', borderRadius: '4px', overflow: 'hidden' }}>
+                                  <div style={{ width: `${row.rate}%`, height: '100%', background: 'rgba(20, 184, 166, 1)', borderRadius: '4px' }} />
+                                </div>
+                                <span style={{ fontSize: '12px', color: colors.textSecondary }}>{row.rate}%</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginTop: '16px',
+                    paddingTop: '16px',
+                    borderTop: `1px solid ${colors.border}`,
+                    fontSize: '14px',
+                    color: colors.textSecondary
+                  }}>
+                    <span>Showing {(cityInsightsPage - 1) * 5 + 1} to {Math.min(cityInsightsPage * 5, 25)} of 25 entries</span>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <button
+                        onClick={() => setCityInsightsPage((p) => Math.max(1, p - 1))}
+                        disabled={cityInsightsPage === 1}
+                        style={{
+                          padding: '6px 12px',
+                          border: `1px solid ${colors.border}`,
+                          borderRadius: '6px',
+                          background: colors.cardBg,
+                          color: colors.textPrimary,
+                          cursor: cityInsightsPage === 1 ? 'not-allowed' : 'pointer',
+                          opacity: cityInsightsPage === 1 ? 0.5 : 1
+                        }}
+                      >
+                        Previous
+                      </button>
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <button
+                          key={n}
+                          onClick={() => setCityInsightsPage(n)}
+                          style={{
+                            padding: '6px 12px',
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: '6px',
+                            background: cityInsightsPage === n ? colors.accent : colors.cardBg,
+                            color: cityInsightsPage === n ? colors.white : colors.textPrimary,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => setCityInsightsPage((p) => Math.min(5, p + 1))}
+                        disabled={cityInsightsPage === 5}
+                        style={{
+                          padding: '6px 12px',
+                          border: `1px solid ${colors.border}`,
+                          borderRadius: '6px',
+                          background: colors.cardBg,
+                          color: colors.textPrimary,
+                          cursor: cityInsightsPage === 5 ? 'not-allowed' : 'pointer',
+                          opacity: cityInsightsPage === 5 ? 0.5 : 1
+                        }}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </PageSection>
@@ -4012,7 +5109,8 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
           <>
         <header style={{
         height: '56px',
-        padding: '0 24px',
+        boxSizing: 'border-box',
+        padding: '12px 24px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
