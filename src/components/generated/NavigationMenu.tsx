@@ -56,6 +56,55 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
   const [listingsRegionsFilter, setListingsRegionsFilter] = useState('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [hoveredNavItem, setHoveredNavItem] = useState<string | null>(null);
+  const [themeTransitioning, setThemeTransitioning] = useState(false);
+
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      ::view-transition-old(root),
+      ::view-transition-new(root) {
+        animation: none;
+        mix-blend-mode: normal;
+      }
+      ::view-transition-old(root) { z-index: 1; }
+      ::view-transition-new(root) { z-index: 9999; }
+      .theme-transition-active::view-transition-new(root) {
+        animation: circle-in 0.8s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+      }
+      .theme-transition-active::view-transition-old(root) {
+        animation: none;
+      }
+      @keyframes circle-in {
+        from { clip-path: circle(0% at 0% 100%); }
+        to   { clip-path: circle(150% at 0% 100%); }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => { document.head.removeChild(style); };
+  }, []);
+
+  const triggerThemeSwitch = () => {
+    playClickSound();
+    const doc = document as any;
+    if (!doc.startViewTransition || themeTransitioning) {
+      setIsDarkMode(prev => !prev);
+      return;
+    }
+    setThemeTransitioning(true);
+    document.documentElement.classList.add('theme-transition-active');
+
+    const transition = doc.startViewTransition(() => {
+      setIsDarkMode(prev => !prev);
+    });
+
+    transition.finished.then(() => {
+      document.documentElement.classList.remove('theme-transition-active');
+      setThemeTransitioning(false);
+    }).catch(() => {
+      document.documentElement.classList.remove('theme-transition-active');
+      setThemeTransitioning(false);
+    });
+  };
 
   useEffect(() => {
     clickAudioRef.current = new Audio('https://storage.googleapis.com/storage.magicpath.ai/global-assets/click-soft-01.mp3');
@@ -2165,8 +2214,9 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
             )}
             <motion.button
               onClick={() => {
-                playClickSound();
-                setIsDarkMode(prev => !prev);
+                if (!themeTransitioning) {
+                  triggerThemeSwitch();
+                }
               }}
               style={{
                 width: '48px',
