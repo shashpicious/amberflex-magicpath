@@ -9,6 +9,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [isDarkMode, setIsDarkMode] = useState(initialMode === 'dark');
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [activeNavigation, setActiveNavigation] = useState('Dashboard');
@@ -141,12 +142,13 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
   // Helper function to get icon filter based on selection and theme
   const getIconFilter = (isSelected: boolean) => {
     if (!isSelected) {
+      if (isDarkMode) {
+        return 'grayscale(100%) brightness(1.4) invert(0.15)';
+      }
       return 'grayscale(100%) brightness(0.6)';
     }
-    // Light mode selected: #1B86FF, Dark mode selected: #3F83F8
     if (isDarkMode) {
-      // #3F83F8 for dark mode (RGB: 63, 131, 248)
-      return 'brightness(0) saturate(100%) invert(27%) sepia(96%) saturate(1352%) hue-rotate(195deg) brightness(99%) contrast(101%)';
+      return 'brightness(0) saturate(100%) invert(100%)';
     } else {
       // #1B86FF for light mode (RGB: 27, 134, 255)
       return 'brightness(0) saturate(100%) invert(11%) sepia(100%) saturate(7498%) hue-rotate(210deg) brightness(100%) contrast(100%)';
@@ -1663,26 +1665,40 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
     position: 'relative'
   }}>
       {/* Sidebar */}
-      <aside style={{
-      width: '256px',
-      height: '100%',
-      backgroundColor: colors.sidebarBg,
-      borderRight: `1px solid ${colors.border}`,
-      display: 'flex',
-      flexDirection: 'column',
-      flexShrink: 0
-    }}>
+      <motion.aside
+        animate={{ width: isCollapsed ? 68 : 256 }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        style={{
+        height: '100%',
+        backgroundColor: colors.sidebarBg,
+        borderRight: `1px solid ${colors.border}`,
+        display: 'flex',
+        flexDirection: 'column',
+        flexShrink: 0,
+        overflow: 'hidden'
+      }}>
         <header style={{
         height: '56px',
         padding: '0 12px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        borderBottom: `1px solid ${colors.border}`
+        justifyContent: isCollapsed ? 'center' : 'space-between',
+        borderBottom: `1px solid ${colors.border}`,
+        flexShrink: 0
       }}>
-          <img src={isDarkMode ? "https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/a37d54b8-199b-45da-a0df-bb52b93313f4.svg" : "https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/0ae077f3-aa72-4d4b-8e69-1f00db96b9a1.svg"} alt="Logo" style={{
-          width: '110px'
-        }} />
+          <AnimatePresence>
+            {!isCollapsed && (
+              <motion.img
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                src={isDarkMode ? "https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/a37d54b8-199b-45da-a0df-bb52b93313f4.svg" : "https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/0ae077f3-aa72-4d4b-8e69-1f00db96b9a1.svg"}
+                alt="Logo"
+                style={{ width: '110px' }}
+              />
+            )}
+          </AnimatePresence>
           <button style={{
           background: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'white',
           border: `1px solid ${colors.border}`,
@@ -1691,10 +1707,16 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center'
-        }} onClick={() => setIsDarkMode(!isDarkMode)}>
-            <img src={isDarkMode ? "https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/7ee9a22d-cb46-403a-8d30-f9de6e035d6e.svg" : "https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/a6f48239-ae45-4de9-a34b-13ef6dfadbb2.svg"} alt="Collapse" style={{
-            width: '16px'
-          }} />
+        }} onClick={() => setIsCollapsed(!isCollapsed)}>
+            <motion.svg
+              animate={{ rotate: isCollapsed ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
+              width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke={isDarkMode ? 'rgba(250, 250, 250, 1)' : 'rgba(10, 10, 10, 1)'}
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </motion.svg>
           </button>
         </header>
 
@@ -1715,13 +1737,15 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                 playClickSound();
                 setActiveNavigation(item.name);
               }}
-              whileHover={{ scale: 1.02, x: 2 }}
+              whileHover={{ scale: 1.02, x: isCollapsed ? 0 : 2 }}
               whileTap={{ scale: 0.98 }}
+              title={isCollapsed ? item.name : undefined}
               style={{
             display: 'flex',
             alignItems: 'center',
+            justifyContent: isCollapsed ? 'center' : 'flex-start',
             gap: '8px',
-            padding: '8px 12px',
+            padding: isCollapsed ? '8px' : '8px 12px',
             border: 'none',
             borderRadius: '8px',
             cursor: 'pointer',
@@ -1746,11 +1770,12 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                 <motion.img
                   src={item.icon}
                   style={{
-                    width: '16px'
+                    width: '16px',
+                    flexShrink: 0
                   }}
                   alt={item.name}
                   animate={{
-                    opacity: activeNavigation === item.name ? 1 : 0.6,
+                    opacity: activeNavigation === item.name ? 1 : (isDarkMode ? 0.85 : 0.6),
                     filter: getIconFilter(activeNavigation === item.name)
                   }}
                   transition={{
@@ -1758,25 +1783,25 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                     ease: [0.4, 0, 0.2, 1]
                   }}
                 />
+                {!isCollapsed && (
                 <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   style={{
               fontSize: '14px',
               fontWeight: 500,
-              fontFamily: '"Geist", sans-serif'
-                  }}
-                  animate={{
-                    color: activeNavigation === item.name ? isDarkMode ? colors.white : 'rgba(10, 10, 10, 1)' : colors.textMuted
-                  }}
-                  transition={{
-                    duration: 0.2,
-                    ease: [0.4, 0, 0.2, 1]
+              fontFamily: '"Geist", sans-serif',
+              whiteSpace: 'nowrap',
+              color: activeNavigation === item.name ? isDarkMode ? colors.white : 'rgba(10, 10, 10, 1)' : colors.textMuted
                   }}
                 >
                   {item.name}
                 </motion.span>
+                )}
               </motion.button>)}
           </div>
 
+          {!isCollapsed && (
           <div style={{
           marginTop: '24px',
           paddingLeft: '12px',
@@ -1790,6 +1815,8 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
             opacity: 0.7
           }}>SYSTEM</span>
           </div>
+          )}
+          {isCollapsed && <div style={{ marginTop: '16px', height: '1px', background: colors.border, margin: '16px 8px 8px' }} />}
 
           <div style={{
           display: 'flex',
@@ -1802,13 +1829,15 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                 playClickSound();
                 setActiveNavigation(item.name);
               }}
-              whileHover={{ scale: 1.02, x: 2 }}
+              whileHover={{ scale: 1.02, x: isCollapsed ? 0 : 2 }}
               whileTap={{ scale: 0.98 }}
+              title={isCollapsed ? item.name : undefined}
               style={{
             display: 'flex',
             alignItems: 'center',
+            justifyContent: isCollapsed ? 'center' : 'flex-start',
             gap: '8px',
-            padding: '8px 12px',
+            padding: isCollapsed ? '8px' : '8px 12px',
             border: 'none',
             borderRadius: '8px',
             cursor: 'pointer',
@@ -1833,11 +1862,12 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                 <motion.img
                   src={item.icon}
                   style={{
-                    width: '16px'
+                    width: '16px',
+                    flexShrink: 0
                   }}
                   alt={item.name}
                   animate={{
-                    opacity: activeNavigation === item.name ? 1 : 0.6,
+                    opacity: activeNavigation === item.name ? 1 : (isDarkMode ? 0.85 : 0.6),
                     filter: getIconFilter(activeNavigation === item.name)
                   }}
                   transition={{
@@ -1845,33 +1875,96 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                     ease: [0.4, 0, 0.2, 1]
                   }}
                 />
+                {!isCollapsed && (
                 <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   style={{
               fontSize: '14px',
               fontWeight: 500,
-              fontFamily: '"Geist", sans-serif'
-                  }}
-                  animate={{
-                    color: activeNavigation === item.name ? isDarkMode ? colors.white : 'rgba(10, 10, 10, 1)' : colors.textMuted
-                  }}
-                  transition={{
-                    duration: 0.2,
-                    ease: [0.4, 0, 0.2, 1]
+              fontFamily: '"Geist", sans-serif',
+              whiteSpace: 'nowrap',
+              color: activeNavigation === item.name ? isDarkMode ? colors.white : 'rgba(10, 10, 10, 1)' : colors.textMuted
                   }}
                 >
                   {item.name}
                 </motion.span>
+                )}
               </motion.button>)}
           </div>
         </div>
 
         <footer style={{
         padding: '8px',
-        borderTop: `1px solid ${colors.border}`
+        flexShrink: 0
       }}>
+          {!isCollapsed && (<>
+          {/* Theme Toggle */}
+          <div style={{ padding: '8px' }}>
+            <div style={{
+              display: 'flex',
+              background: isDarkMode ? 'rgba(39, 39, 42, 1)' : 'rgba(244, 244, 245, 1)',
+              borderRadius: '8px',
+              padding: '3px',
+              gap: '2px'
+            }}>
+              <button
+                onClick={() => setIsDarkMode(false)}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '6px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: !isDarkMode ? 'white' : 'transparent',
+                  boxShadow: !isDarkMode ? '0px 1px 2px rgba(0, 0, 0, 0.06)' : 'none',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={!isDarkMode ? 'rgba(10, 10, 10, 1)' : 'rgba(163, 163, 163, 1)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setIsDarkMode(true)}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '6px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'transparent',
+                  boxShadow: isDarkMode ? '0px 1px 2px rgba(0, 0, 0, 0.3)' : 'none',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isDarkMode ? 'rgba(250, 250, 250, 1)' : 'rgba(163, 163, 163, 1)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Separator */}
+          <div style={{
+            height: '1px',
+            background: colors.border,
+            margin: '4px 8px'
+          }} />
+          </>)}
+
+          {/* User Info */}
           <div style={{
           display: 'flex',
           alignItems: 'center',
+          justifyContent: isCollapsed ? 'center' : 'flex-start',
           gap: '8px',
           padding: '8px',
           borderRadius: '6px',
@@ -1881,7 +1974,8 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
             width: '32px',
             height: '32px',
             borderRadius: '10px',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            flexShrink: 0
           }}>
               <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/dc02994b-7128-4082-bda2-be088cdd50d9.png" style={{
               width: '100%',
@@ -1889,26 +1983,38 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
               objectFit: 'cover'
             }} alt="Avatar" />
             </div>
+            {!isCollapsed && (
+            <>
             <div style={{
-            flex: 1
+            flex: 1,
+            overflow: 'hidden'
           }}>
               <div style={{
               color: colors.textPrimary,
               fontSize: '14px',
-              fontWeight: 500
+              fontWeight: 500,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}>{isDarkMode ? 'Anmol Education' : 'Shadcn'}</div>
               <div style={{
               color: colors.textSecondary,
               fontSize: '12px',
-              fontWeight: 300
+              fontWeight: 300,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}>arthur@alignui.com</div>
             </div>
             <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/125d49d8-142b-42e6-9e68-672689aeaf70.svg" style={{
-            width: '16px'
+            width: '16px',
+            flexShrink: 0
           }} />
+            </>
+            )}
           </div>
         </footer>
-      </aside>
+      </motion.aside>
 
       {/* Main Content */}
       <main
