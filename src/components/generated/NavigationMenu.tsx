@@ -21,6 +21,10 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
   const [bookingTypeFilter, setBookingTypeFilter] = useState('');
   const [subPartnersStatusFilter, setSubPartnersStatusFilter] = useState('');
   const [subPartnersBookingTypeFilter, setSubPartnersBookingTypeFilter] = useState('');
+  const [listingsPage, setListingsPage] = useState(1);
+  const [listingsSearchQuery, setListingsSearchQuery] = useState('');
+  const [listingsProviderFilter, setListingsProviderFilter] = useState('');
+  const [selectedListing, setSelectedListing] = useState<any>(null);
   const itemsPerPage = 10;
   const [settingsTab, setSettingsTab] = useState('Brand Identity');
   const [brandColor, setBrandColor] = useState('#015A57');
@@ -139,6 +143,12 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
     white: 'rgba(255, 255, 255, 1)'
   };
   
+  const avatarColors = [
+    { bg: 'rgba(192, 219, 255, 1)', text: 'rgba(18, 55, 104, 1)' },
+    { bg: 'rgba(218, 192, 255, 1)', text: 'rgba(62, 26, 117, 1)' },
+  ];
+  const getAvatarColors = (index: number) => avatarColors[index % 2];
+
   // Helper function to get icon filter based on selection and theme
   const getIconFilter = (isSelected: boolean) => {
     if (!isSelected) {
@@ -857,6 +867,30 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
     created: '05/25/2025'
   }] as any[];
   
+  // Listings data
+  const listingsData = [
+    { propertyName: 'Connectld1', providerName: 'A & o Hostels', type: 'Student Accommodation' },
+    { propertyName: '360 King Street, Melbourne', providerName: 'Asset Living', type: 'Student Accommodation' },
+    { propertyName: 'HMO Slash Pricing', providerName: 'True Student', type: 'Independent House' },
+    { propertyName: 'Mapbox_Bamio', providerName: 'City Block', type: 'Student Accommodation' },
+    { propertyName: 'Riverside Apartments, Leeds', providerName: 'Park Place', type: 'Independent House' },
+    { propertyName: 'Victoria Point Studios', providerName: 'Neighborhood Living', type: 'Independent House' },
+    { propertyName: 'Inventory Check Complete', providerName: 'Community Stays', type: 'Independent House' },
+    { propertyName: 'Sydney CBD Accommodation', providerName: 'Shopping District Co.', type: 'Student Accommodation' },
+    { propertyName: 'Canary Wharf Residency', providerName: 'Community Stays', type: 'Private Housing' },
+    { propertyName: "King's Cross Studios", providerName: 'City Park Residences', type: 'University Dormitories' },
+    { propertyName: 'Operation Campus Living', providerName: 'Cultural Hub', type: 'Shared Flats' },
+    { propertyName: 'Mayfair Student Living', providerName: 'True Student', type: 'Student Accommodation' },
+    { propertyName: '15 Oxford Street Residences', providerName: 'Asset Living', type: 'Independent House' },
+    { propertyName: 'Central Park Residences', providerName: 'A & o Hostels', type: 'Student Accommodation' },
+    { propertyName: 'Brunswick House', providerName: 'City Block', type: 'Shared Flats' },
+    { propertyName: 'Victoria Gardens', providerName: 'Park Place', type: 'Private Housing' },
+    { propertyName: 'East End Flats', providerName: 'Community Stays', type: 'Independent House' },
+    { propertyName: 'Manchester Metropolitan Hub', providerName: 'Neighborhood Living', type: 'University Dormitories' },
+    { propertyName: 'Nottingham Student Hub', providerName: 'Shopping District Co.', type: 'Student Accommodation' },
+    { propertyName: 'Sheffield Central Living', providerName: 'City Park Residences', type: 'Independent House' },
+  ] as any[];
+
   // Campaigns/Events data
   const campaignsData = [
     {
@@ -1627,6 +1661,59 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
     return pages;
   };
 
+  // Filter Listings data
+  const filteredListingsData = listingsData.filter((item: any) => {
+    if (listingsSearchQuery && !item.propertyName.toLowerCase().includes(listingsSearchQuery.toLowerCase())) return false;
+    if (listingsProviderFilter && item.providerName !== listingsProviderFilter) return false;
+    return true;
+  });
+
+  // Listings pagination logic
+  const listingsTotalItems = filteredListingsData.length;
+  const listingsTotalPages = Math.ceil(listingsTotalItems / itemsPerPage);
+  const listingsStartIndex = (listingsPage - 1) * itemsPerPage;
+  const listingsEndIndex = listingsStartIndex + itemsPerPage;
+  const currentListingsData = filteredListingsData.slice(listingsStartIndex, listingsEndIndex);
+  const listingsStartItem = listingsStartIndex + 1;
+  const listingsEndItem = Math.min(listingsEndIndex, listingsTotalItems);
+
+  const handleListingsPrevious = () => {
+    if (listingsPage > 1) setListingsPage(listingsPage - 1);
+  };
+  const handleListingsNext = () => {
+    if (listingsPage < listingsTotalPages) setListingsPage(listingsPage + 1);
+  };
+  const handleListingsPageClick = (page: number) => {
+    if (page !== -1) setListingsPage(page);
+  };
+  const getListingsPageNumbers = () => {
+    const pages: number[] = [];
+    const maxVisible = 4;
+    if (listingsTotalPages <= maxVisible) {
+      for (let i = 1; i <= listingsTotalPages; i++) pages.push(i);
+    } else {
+      if (listingsPage <= 2) {
+        for (let i = 1; i <= 3; i++) pages.push(i);
+        pages.push(-1);
+        pages.push(listingsTotalPages);
+      } else if (listingsPage >= listingsTotalPages - 1) {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = listingsTotalPages - 2; i <= listingsTotalPages; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push(-1);
+        pages.push(listingsPage - 1);
+        pages.push(listingsPage);
+        pages.push(listingsPage + 1);
+        pages.push(-1);
+        pages.push(listingsTotalPages);
+      }
+    }
+    return pages;
+  };
+  const listingsProviders = Array.from(new Set(listingsData.map((d: any) => d.providerName)));
+
   const getStatusBadge = (status: string) => {
     let bgColor = 'rgba(227, 146, 25, 0.1)';
     let textColor = 'rgba(217, 119, 6, 1)';
@@ -2025,7 +2112,285 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
           position: 'relative'
         }}
       >
-        {activeNavigation === 'Commissions' ? (
+        {activeNavigation === 'Listings' ? (
+          <>
+            {/* Listings Header */}
+            <header style={{
+              height: '56px',
+              padding: '0 24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderBottom: `1px solid ${colors.border}`,
+              backgroundColor: isDarkMode ? 'rgba(23, 23, 23, 1)' : 'rgba(250, 250, 250, 1)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/7535b31f-4722-4f37-b3f2-a80994c6c8e2.svg" style={{ width: '20px' }} alt="back" />
+                <div style={{ height: '16px', borderLeft: `1px solid ${colors.border}` }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '14px', color: colors.textSecondary, fontFamily: '"Geist Mono"', textTransform: 'uppercase' }}>Dashboard</span>
+                  <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/42fc4aca-b2d6-4358-bd46-3ec69e3c9773.svg" style={{ width: '14px' }} alt=">" />
+                  <span style={{ fontSize: '14px', color: colors.textPrimary, fontFamily: '"Geist Mono"', textTransform: 'uppercase' }}>Listings</span>
+                </div>
+              </div>
+            </header>
+
+            {/* Listings Filter / Search Bar */}
+            <div style={{
+              height: '68px',
+              padding: '0 24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderBottom: `1px solid ${colors.border}`,
+              backgroundColor: colors.bg
+            }}>
+              {/* Search Input */}
+              <div style={{
+                width: '320px',
+                height: '36px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '0 8px',
+                border: `1px solid ${colors.border}`,
+                borderRadius: '8px',
+                backgroundColor: colors.bg,
+                boxShadow: '0px 1px 2px 0px rgba(10, 13, 20, 0.03)'
+              }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.textSecondary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                </svg>
+                <input
+                  type="text"
+                  value={listingsSearchQuery}
+                  onChange={(e) => { setListingsSearchQuery(e.target.value); setListingsPage(1); }}
+                  placeholder="Property Name"
+                  style={{
+                    flex: 1,
+                    border: 'none',
+                    outline: 'none',
+                    fontSize: '14px',
+                    color: colors.textPrimary,
+                    backgroundColor: 'transparent',
+                    fontFamily: '"Geist", sans-serif'
+                  }}
+                />
+                <div style={{
+                  padding: '2px 6px',
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  color: colors.textSecondary,
+                  fontFamily: '"Inter", sans-serif',
+                  letterSpacing: '0.48px',
+                  textTransform: 'uppercase'
+                }}>⌘K</div>
+              </div>
+
+              {/* Filter Dropdowns */}
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                <div style={{ position: 'relative' }}>
+                  <select
+                    value={listingsProviderFilter}
+                    onChange={(e) => { setListingsProviderFilter(e.target.value); setListingsPage(1); }}
+                    style={{
+                      padding: '6px 32px 6px 12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      background: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'white',
+                      color: colors.textPrimary,
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      fontFamily: '"Geist", sans-serif',
+                      cursor: 'pointer',
+                      appearance: 'none',
+                      outline: 'none',
+                      minWidth: '140px'
+                    }}
+                  >
+                    <option value="">Provider Name</option>
+                    {listingsProviders.map((p: any) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                  <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/bdac8b93-a7aa-419c-bf92-50e0ad68ec5c.svg" style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', width: '16px', pointerEvents: 'none' }} />
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <select
+                    style={{
+                      padding: '6px 32px 6px 12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      background: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'white',
+                      color: colors.textPrimary,
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      fontFamily: '"Geist", sans-serif',
+                      cursor: 'pointer',
+                      appearance: 'none',
+                      outline: 'none',
+                      minWidth: '130px'
+                    }}
+                  >
+                    <option value="">Regions (10)</option>
+                  </select>
+                  <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/bdac8b93-a7aa-419c-bf92-50e0ad68ec5c.svg" style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', width: '16px', pointerEvents: 'none' }} />
+                </div>
+              </div>
+            </div>
+
+            {/* Listings Table */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`listings-${listingsPage}-${listingsSearchQuery}-${listingsProviderFilter}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                style={{ flex: 1, overflowX: 'auto' }}
+              >
+                <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+                  <thead>
+                    <tr style={{
+                      backgroundColor: isDarkMode ? 'rgba(23, 23, 23, 1)' : 'rgba(250, 250, 250, 1)',
+                      borderBottom: `1px solid ${colors.border}`,
+                      height: '42px'
+                    }}>
+                      <th style={{ width: '49px', padding: '0 8px', textAlign: 'center', borderBottom: `1px solid ${colors.border}` }}>
+                        <input type="checkbox" style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: colors.accent }} />
+                      </th>
+                      <th style={{ width: '368px', padding: '0 8px', textAlign: 'left', fontSize: '13px', fontFamily: '"Geist Mono", sans-serif', fontWeight: 500, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.3px', borderBottom: `1px solid ${colors.border}` }}>Property Name</th>
+                      <th style={{ padding: '0 16px', textAlign: 'left', fontSize: '13px', fontFamily: '"Geist Mono", sans-serif', fontWeight: 500, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.3px', borderBottom: `1px solid ${colors.border}` }}>Provider Name</th>
+                      <th style={{ padding: '0 8px', textAlign: 'left', fontSize: '13px', fontFamily: '"Geist Mono", sans-serif', fontWeight: 500, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.3px', borderBottom: `1px solid ${colors.border}` }}>Type</th>
+                      <th style={{ width: '140px', padding: '0 8px', textAlign: 'center', fontSize: '13px', fontFamily: '"Geist Mono", sans-serif', fontWeight: 500, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.3px', borderBottom: `1px solid ${colors.border}` }}>Manage</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentListingsData.map((item: any, idx: number) => (
+                      <motion.tr
+                        key={`listing-${listingsStartIndex + idx}`}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: idx * 0.03, ease: [0.4, 0, 0.2, 1] }}
+                        style={{ borderBottom: `1px solid ${colors.border}`, height: '56px', backgroundColor: colors.bg }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = isDarkMode ? 'rgba(23, 23, 23, 0.6)' : 'rgba(250, 250, 250, 0.7)'; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = colors.bg; }}
+                      >
+                        <td style={{ padding: '0 8px', textAlign: 'center' }}>
+                          <input type="checkbox" style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: colors.accent }} />
+                        </td>
+                        <td style={{ padding: '0 8px' }}>
+                          <button
+                            onClick={() => playClickSound()}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              padding: 0,
+                              cursor: 'pointer',
+                              fontSize: '14px',
+                              fontWeight: 500,
+                              color: colors.accent,
+                              fontFamily: '"Geist", sans-serif',
+                              textAlign: 'left',
+                              maxWidth: '350px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >{item.propertyName}</button>
+                        </td>
+                        <td style={{ padding: '0 16px', fontSize: '14px', fontWeight: 400, color: colors.textPrimary, fontFamily: '"Geist", sans-serif' }}>{item.providerName}</td>
+                        <td style={{ padding: '0 8px', fontSize: '14px', fontWeight: 400, color: colors.textPrimary, fontFamily: '"Geist", sans-serif' }}>{item.type}</td>
+                        <td style={{ padding: '0 8px', textAlign: 'center' }}>
+                          <button
+                            onClick={() => { playClickSound(); setSelectedListing(item); }}
+                            style={{
+                              padding: '4px 8px',
+                              border: `1px solid ${colors.border}`,
+                              borderRadius: '8px',
+                              backgroundColor: isDarkMode ? 'rgba(39, 39, 42, 1)' : 'rgba(245, 245, 245, 1)',
+                              color: colors.textPrimary,
+                              fontSize: '12px',
+                              fontWeight: 500,
+                              fontFamily: '"Geist", sans-serif',
+                              cursor: 'pointer',
+                              height: '26px',
+                              display: 'inline-flex',
+                              alignItems: 'center'
+                            }}
+                          >See Details</button>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Listings Pagination Footer */}
+            <footer style={{
+              height: '68px',
+              padding: '0 24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderTop: `1px solid ${colors.border}`,
+              marginTop: 'auto',
+              backgroundColor: colors.bg
+            }}>
+              <span style={{ fontSize: '14px', color: colors.textSecondary }}>
+                Showing {listingsStartItem} to {listingsEndItem} of {listingsTotalItems} entries
+              </span>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                <button onClick={handleListingsPrevious} disabled={listingsPage === 1} style={{
+                  padding: '6px 12px',
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  background: 'transparent',
+                  cursor: listingsPage === 1 ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  opacity: listingsPage === 1 ? 0.5 : 1
+                }}>
+                  <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/01c076b6-3528-475d-af10-7b71b96e0863.svg" style={{ width: '16px' }} />
+                  <span style={{ color: colors.textPrimary, fontSize: '14px', fontWeight: 500 }}>Previous</span>
+                </button>
+                {getListingsPageNumbers().map((page, i) => (
+                  <button key={`lp-${page}-${i}`} onClick={() => handleListingsPageClick(page)} style={{
+                    width: '28px',
+                    height: '28px',
+                    border: page === listingsPage ? `1px solid ${colors.accent}` : 'none',
+                    borderRadius: '8px',
+                    cursor: page === -1 ? 'default' : 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    backgroundColor: page === listingsPage ? (isDarkMode ? colors.white : 'rgba(237, 243, 255, 1)') : 'transparent',
+                    color: page === listingsPage ? colors.accent : colors.textPrimary
+                  }}>
+                    {page === -1 ? '...' : page}
+                  </button>
+                ))}
+                <button onClick={handleListingsNext} disabled={listingsPage === listingsTotalPages} style={{
+                  padding: '6px 12px',
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  background: 'transparent',
+                  cursor: listingsPage === listingsTotalPages ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  opacity: listingsPage === listingsTotalPages ? 0.5 : 1
+                }}>
+                  <span style={{ color: colors.textPrimary, fontSize: '14px', fontWeight: 500 }}>Next</span>
+                  <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/607c4c87-4637-410f-bdea-5d4899aac524.svg" style={{ width: '16px' }} />
+                </button>
+              </div>
+            </footer>
+          </>
+        ) : activeNavigation === 'Commissions' ? (
           <>
             {/* Commissions Header */}
             <header style={{
@@ -2589,13 +2954,13 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                           width: '32px',
                           height: '32px',
                           borderRadius: '50%',
-                          backgroundColor: campaign.color,
+                          backgroundColor: getAvatarColors(i).bg,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center'
                         }}>
                           <span style={{
-                            color: campaign.textColor,
+                            color: getAvatarColors(i).text,
                             fontSize: '14px',
                             fontWeight: 500
                           }}>{campaign.initial}</span>
@@ -2628,9 +2993,9 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                         alignItems: 'center',
                         gap: '4px',
                         padding: '4px 8px',
-                        backgroundColor: 'rgba(12, 99, 248, 1)',
-                        color: 'white',
-                        border: 'none',
+                        backgroundColor: 'transparent',
+                        color: 'rgba(12, 99, 248, 1)',
+                        border: '1px solid rgba(12, 99, 248, 1)',
                         borderRadius: '6px',
                         cursor: 'pointer',
                         fontSize: '12px',
@@ -2638,7 +3003,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                       }}>
                         Refer
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M2.5 9.5L9.5 2.5M9.5 2.5H4.5M9.5 2.5V7.5" stroke="white" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M2.5 9.5L9.5 2.5M9.5 2.5H4.5M9.5 2.5V7.5" stroke="rgba(12, 99, 248, 1)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </button>
                     </td>
@@ -2845,14 +3210,6 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                     }}>STATUS</th>
                     <th style={{
                       textAlign: 'left',
-                      padding: '12px 16px',
-                      fontSize: '13px',
-                      color: colors.textSecondary,
-                      fontFamily: '"Geist Mono"',
-                      fontWeight: 500
-                    }}>EMAIL</th>
-                    <th style={{
-                      textAlign: 'left',
                       padding: '12px 8px',
                       fontSize: '13px',
                       color: colors.textSecondary,
@@ -2903,13 +3260,13 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
             width: '32px',
             height: '32px',
                           borderRadius: '50%',
-                          backgroundColor: campaign.color,
+                          backgroundColor: getAvatarColors(i).bg,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center'
                         }}>
                           <span style={{
-                            color: campaign.textColor,
+                            color: getAvatarColors(i).text,
                             fontSize: '14px',
                             fontWeight: 500
                           }}>{campaign.initial}</span>
@@ -2934,11 +3291,6 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                       padding: '8px 8px'
                     }}>{getStatusBadge(campaign.status)}</td>
                     <td style={{
-                      padding: '8px 16px',
-                      fontSize: '14px',
-                      color: colors.textPrimary
-                    }}>{campaign.email}</td>
-                    <td style={{
                       padding: '8px 8px',
                       fontSize: '14px',
                       color: colors.textPrimary
@@ -2951,9 +3303,9 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                         alignItems: 'center',
                         gap: '4px',
                         padding: '4px 8px',
-                        backgroundColor: 'rgba(12, 99, 248, 1)',
-                        color: 'white',
-                        border: 'none',
+                        backgroundColor: 'transparent',
+                        color: 'rgba(12, 99, 248, 1)',
+                        border: '1px solid rgba(12, 99, 248, 1)',
                         borderRadius: '6px',
                         cursor: 'pointer',
                         fontSize: '12px',
@@ -2961,7 +3313,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                       }}>
                         Refer
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M2.5 9.5L9.5 2.5M9.5 2.5H4.5M9.5 2.5V7.5" stroke="white" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M2.5 9.5L9.5 2.5M9.5 2.5H4.5M9.5 2.5V7.5" stroke="rgba(12, 99, 248, 1)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </button>
                     </td>
@@ -4434,13 +4786,13 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                     width: '32px',
                     height: '32px',
                     borderRadius: '50%',
-                    backgroundColor: lead.color,
+                    backgroundColor: getAvatarColors(i).bg,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}>
                         <span style={{
-                      color: lead.textColor,
+                      color: getAvatarColors(i).text,
                       fontSize: '14px',
                       fontWeight: 500
                     }}>{lead.initial}</span>
@@ -4768,5 +5120,211 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
           </>
         )}
       </main>
+
+      {/* Listing Detail Side Drawer */}
+      <AnimatePresence>
+        {selectedListing && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="listing-drawer-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+              onClick={() => setSelectedListing(null)}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                backdropFilter: 'blur(4px)',
+                WebkitBackdropFilter: 'blur(4px)',
+                zIndex: 40
+              }}
+            />
+
+            {/* Drawer Panel */}
+            <motion.div
+              key="listing-drawer-panel"
+              initial={{ x: '100%', opacity: 0.6 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: '100%', opacity: 0.6 }}
+              transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+              style={{
+                position: 'fixed',
+                top: '16px',
+                right: '16px',
+                bottom: '16px',
+                width: '480px',
+                backgroundColor: colors.bg,
+                zIndex: 50,
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '0px 0px 0px 1px rgba(51,51,51,0.04), 0px 1px 1px 0.5px rgba(51,51,51,0.04), 0px 6px 6px -3px rgba(51,51,51,0.04), 0px 24px 24px -12px rgba(51,51,51,0.04), 0px 48px 48px -24px rgba(51,51,51,0.04)',
+                borderRadius: '20px',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Header */}
+              <div style={{
+                padding: '20px',
+                borderBottom: `1px solid ${colors.border}`,
+                backgroundColor: colors.bg,
+                display: 'flex',
+                gap: '16px',
+                alignItems: 'flex-start',
+                flexShrink: 0
+              }}>
+                {/* Left: Title + meta */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {/* Property name row */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {/* Chevron Left */}
+                    <button
+                      onClick={() => {
+                        const idx = filteredListingsData.indexOf(selectedListing);
+                        if (idx > 0) setSelectedListing(filteredListingsData[idx - 1]);
+                      }}
+                      style={{
+                        width: '36px', height: '36px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '8px',
+                        background: colors.bg,
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                        boxShadow: '0px 1px 2px rgba(0,0,0,0.05)'
+                      }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.textPrimary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
+                    <span style={{ fontSize: '18px', fontWeight: 500, color: colors.textPrimary, fontFamily: '"Geist", sans-serif', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {selectedListing.propertyName}
+                    </span>
+                    {/* Chevron Right */}
+                    <button
+                      onClick={() => {
+                        const idx = filteredListingsData.indexOf(selectedListing);
+                        if (idx < filteredListingsData.length - 1) setSelectedListing(filteredListingsData[idx + 1]);
+                      }}
+                      style={{
+                        width: '36px', height: '36px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '8px',
+                        background: colors.bg,
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                        boxShadow: '0px 1px 2px rgba(0,0,0,0.05)'
+                      }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.textPrimary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                  </div>
+                  {/* Meta: location + type */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.textSecondary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                      <span style={{ fontSize: '14px', fontWeight: 400, color: colors.textSecondary, fontFamily: '"Geist", sans-serif' }}>London, England, United Kingdom</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.textSecondary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
+                      <span style={{ fontSize: '14px', fontWeight: 400, color: colors.textSecondary, fontFamily: '"Geist", sans-serif' }}>{selectedListing.type}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: badge + close + deactivate */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between', alignSelf: 'stretch', flexShrink: 0, gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    {/* Active badge */}
+                    <div style={{
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      background: 'rgba(22, 163, 74, 0.1)',
+                      display: 'inline-flex', alignItems: 'center'
+                    }}>
+                      <span style={{ fontSize: '12px', fontWeight: 500, color: 'rgba(22, 163, 74, 1)', fontFamily: '"Geist", sans-serif', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Active</span>
+                    </div>
+                    {/* Close */}
+                    <button
+                      onClick={() => setSelectedListing(null)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center', color: colors.textPrimary }}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.textSecondary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+                  </div>
+                  {/* Deactivate button */}
+                  <button style={{
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                    padding: '6px 12px',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '8px',
+                    background: colors.bg,
+                    cursor: 'pointer',
+                    boxShadow: '0px 1px 2px rgba(0,0,0,0.05)'
+                  }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.textPrimary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></svg>
+                    <span style={{ fontSize: '14px', fontWeight: 500, color: colors.textPrimary, fontFamily: '"Geist", sans-serif' }}>Deactivate</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Scrollable content */}
+              <div style={{ flex: 1, overflowY: 'auto' }}>
+                {/* COMMON AREA */}
+                <div style={{ padding: '6px 20px', backgroundColor: colors.sidebarBg }}>
+                  <span style={{ fontSize: '12px', fontWeight: 500, color: colors.textSecondary, fontFamily: '"Geist Mono", sans-serif', textTransform: 'uppercase', letterSpacing: '0.48px' }}>Common Area</span>
+                </div>
+                <div style={{ padding: '20px', borderBottom: `1px solid ${colors.border}`, backgroundColor: colors.bg }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 400, color: colors.textPrimary, fontFamily: '"Inter", sans-serif', letterSpacing: '-0.084px' }}>Area Size</span>
+                    <span style={{ fontSize: '14px', fontWeight: 500, color: colors.textSecondary, fontFamily: '"Geist", sans-serif' }}>– –</span>
+                  </div>
+                </div>
+
+                {/* ROOM 1 */}
+                <div style={{ padding: '6px 20px', backgroundColor: colors.sidebarBg }}>
+                  <span style={{ fontSize: '12px', fontWeight: 500, color: colors.textSecondary, fontFamily: '"Geist Mono", sans-serif', textTransform: 'uppercase', letterSpacing: '0.48px' }}>Room 1</span>
+                </div>
+                <div style={{ padding: '20px', borderBottom: `1px solid ${colors.border}`, backgroundColor: colors.bg, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {[['Bathroom', 'NO'], ['Private Room', 'NO']].map(([label, val]) => (
+                    <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 400, color: colors.textPrimary, fontFamily: '"Inter", sans-serif', letterSpacing: '-0.084px' }}>{label}</span>
+                      <span style={{ fontSize: '14px', fontWeight: 500, color: colors.textSecondary, fontFamily: '"Geist", sans-serif' }}>{val}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* BILLS INCLUDED */}
+                <div style={{ padding: '6px 20px', backgroundColor: colors.sidebarBg }}>
+                  <span style={{ fontSize: '12px', fontWeight: 500, color: colors.textSecondary, fontFamily: '"Geist Mono", sans-serif', textTransform: 'uppercase', letterSpacing: '0.48px' }}>Bills Included</span>
+                </div>
+                <div style={{ padding: '20px', borderBottom: `1px solid ${colors.border}`, backgroundColor: colors.bg, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {[['Internet or wifi', 'NO'], ['Water', 'NO'], ['Electricity', 'NO'], ['Gas', 'NO']].map(([label, val]) => (
+                    <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 400, color: colors.textPrimary, fontFamily: '"Inter", sans-serif', letterSpacing: '-0.084px' }}>{label}</span>
+                      <span style={{ fontSize: '14px', fontWeight: 500, color: colors.textSecondary, fontFamily: '"Geist", sans-serif' }}>{val}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* PRICE & AVAILABILITY */}
+                <div style={{ padding: '6px 20px', backgroundColor: colors.sidebarBg }}>
+                  <span style={{ fontSize: '12px', fontWeight: 500, color: colors.textSecondary, fontFamily: '"Geist Mono", sans-serif', textTransform: 'uppercase', letterSpacing: '0.48px' }}>Price & Availability</span>
+                </div>
+                <div style={{ padding: '20px', borderBottom: `1px solid ${colors.border}`, backgroundColor: colors.bg, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {[['Deposit', '$65'], ['Lease Duration', 'NO'], ['Available From', '02/7/2025'], ['Price', '£500/weekly']].map(([label, val]) => (
+                    <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 400, color: colors.textPrimary, fontFamily: '"Inter", sans-serif', letterSpacing: '-0.084px' }}>{label}</span>
+                      <span style={{ fontSize: '14px', fontWeight: 500, color: colors.textSecondary, fontFamily: '"Geist Mono", sans-serif' }}>{val}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>;
 };
