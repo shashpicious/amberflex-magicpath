@@ -4365,6 +4365,171 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
               </div>
             </div>
           </>
+        ) : activeNavigation === 'Integrations' ? (
+          <>
+            {/* Integrations Header */}
+            <header style={{
+              height: '56px',
+              padding: '0 24px',
+              display: 'flex',
+              alignItems: 'center',
+              borderBottom: `1px solid ${colors.border}`,
+              backgroundColor: isDarkMode ? 'rgba(23, 23, 23, 1)' : 'rgba(250, 250, 250, 1)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/7535b31f-4722-4f37-b3f2-a80994c6c8e2.svg" style={{ width: '20px' }} alt="back" />
+                <div style={{ height: '16px', borderLeft: `1px solid ${colors.border}` }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '14px', color: colors.textSecondary, fontFamily: '"Geist Mono"', textTransform: 'uppercase' }}>Dashboard</span>
+                  <img src="https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/42fc4aca-b2d6-4358-bd46-3ec69e3c9773.svg" style={{ width: '14px' }} alt=">" />
+                  <span style={{ fontSize: '14px', color: colors.textPrimary, fontFamily: '"Geist Mono"', textTransform: 'uppercase' }}>Integrations</span>
+                </div>
+              </div>
+            </header>
+
+            {/* Integrations Content */}
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '48px 24px', overflowY: 'auto', backgroundColor: colors.bg }}>
+              <div style={{ width: '100%', maxWidth: '585px' }}>
+
+                {/* Page title */}
+                <motion.div
+                  key="int-title"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                  style={{ marginBottom: '20px' }}
+                >
+                  <p style={{ margin: 0, fontSize: '16px', fontWeight: 500, color: isDarkMode ? colors.textPrimary : 'rgba(23, 23, 23, 1)', fontFamily: '"Inter", sans-serif', letterSpacing: '-0.176px' }}>All Apps</p>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '14px', fontWeight: 400, color: isDarkMode ? colors.textSecondary : 'rgba(92, 92, 92, 1)', fontFamily: '"Inter", sans-serif', letterSpacing: '-0.084px' }}>Discover the available integrations.</p>
+                </motion.div>
+
+                {/* Top divider */}
+                <motion.div
+                  key="int-divider-top"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3, delay: 0.08, ease: [0.4, 0, 0.2, 1] }}
+                  style={{ height: '1px', backgroundColor: isDarkMode ? colors.border : 'rgba(235, 235, 235, 1)', marginBottom: '20px' }}
+                />
+
+                {/* Integration rows */}
+                {[
+                  {
+                    title: 'Widget Integrations',
+                    description: 'Integrate amberstudent widget',
+                    icon: (
+                      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <rect x="2" y="2" width="28" height="28" rx="5" fill="#D83B01"/>
+                        <path d="M8 8H6v12l6-3 5 3V8H8z" fill="white"/>
+                        <rect x="18" y="11" width="7" height="2" rx="1" fill="rgba(255,255,255,0.75)"/>
+                        <rect x="18" y="15" width="5" height="2" rx="1" fill="rgba(255,255,255,0.75)"/>
+                        <rect x="18" y="19" width="6" height="2" rx="1" fill="rgba(255,255,255,0.75)"/>
+                      </svg>
+                    )
+                  },
+                  {
+                    title: 'Inventories API',
+                    description: 'Get a list of filtered amenities',
+                    icon: (
+                      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                        <rect x="2" y="11" width="6" height="6" rx="3" fill="#E01E5A"/>
+                        <rect x="11" y="11" width="6" height="6" rx="3" fill="#36C5F0"/>
+                        <rect x="2" y="20" width="6" height="6" rx="3" fill="#2EB67D"/>
+                        <rect x="11" y="20" width="6" height="6" rx="3" fill="#ECB22E"/>
+                        <rect x="2" y="2" width="6" height="6" rx="3" fill="#ECB22E"/>
+                        <rect x="11" y="2" width="6" height="6" rx="3" fill="#E01E5A"/>
+                        <rect x="20" y="11" width="6" height="6" rx="3" fill="#2EB67D"/>
+                        <rect x="20" y="2" width="6" height="6" rx="3" fill="#36C5F0"/>
+                      </svg>
+                    )
+                  },
+                  {
+                    title: 'Leads API',
+                    description: 'Create new leads and details of existing leads',
+                    icon: (
+                      <svg width="30" height="28" viewBox="0 0 30 28" fill="none">
+                        <circle cx="15" cy="7" r="6" fill="#F06A6A"/>
+                        <circle cx="6" cy="22" r="6" fill="#F06A6A"/>
+                        <circle cx="24" cy="22" r="6" fill="#F06A6A"/>
+                      </svg>
+                    )
+                  },
+                  {
+                    title: 'Branding And Marketing Assets',
+                    description: 'Repository of amber branding assets',
+                    icon: (
+                      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <rect x="2" y="2" width="28" height="28" rx="6" fill="#2D8CFF"/>
+                        <rect x="4" y="10" width="15" height="12" rx="3" fill="white"/>
+                        <path d="M21 13.5l7-4v13l-7-4V13.5z" fill="white"/>
+                      </svg>
+                    )
+                  }
+                ].map((item, idx) => (
+                  <React.Fragment key={item.title}>
+                    <motion.div
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.35, delay: 0.1 + idx * 0.08, ease: [0.4, 0, 0.2, 1] }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '14px' }}
+                    >
+                      {/* Brand icon */}
+                      <div style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '50%',
+                        border: `1px solid ${isDarkMode ? colors.border : 'rgba(235, 235, 235, 1)'}`,
+                        boxShadow: '0px 1px 2px 0px rgba(10, 13, 20, 0.03)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: isDarkMode ? colors.cardBg : 'white',
+                        flexShrink: 0
+                      }}>
+                        {item.icon}
+                      </div>
+
+                      {/* Text */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ margin: 0, fontSize: '16px', fontWeight: 500, color: isDarkMode ? colors.textPrimary : 'rgba(23, 23, 23, 1)', fontFamily: '"Inter", sans-serif', letterSpacing: '-0.176px' }}>{item.title}</p>
+                        <p style={{ margin: '4px 0 0 0', fontSize: '14px', fontWeight: 400, color: isDarkMode ? colors.textSecondary : 'rgba(92, 92, 92, 1)', fontFamily: '"Inter", sans-serif', letterSpacing: '-0.084px' }}>{item.description}</p>
+                      </div>
+
+                      {/* Manage button */}
+                      <button
+                        onClick={() => playClickSound()}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '8px',
+                          border: `1px solid ${isDarkMode ? colors.border : 'rgba(235, 235, 235, 1)'}`,
+                          borderRadius: '8px',
+                          backgroundColor: isDarkMode ? colors.cardBg : 'white',
+                          cursor: 'pointer',
+                          boxShadow: '0px 1px 2px 0px rgba(10, 13, 20, 0.03)',
+                          flexShrink: 0
+                        }}
+                      >
+                        <span style={{ fontSize: '14px', fontWeight: 500, color: isDarkMode ? colors.textSecondary : 'rgba(92, 92, 92, 1)', fontFamily: '"Inter", sans-serif', letterSpacing: '-0.084px' }}>Manage</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isDarkMode ? colors.textSecondary : 'rgba(92, 92, 92, 1)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                      </button>
+                    </motion.div>
+
+                    {/* Divider between items */}
+                    {idx < 3 && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3, delay: 0.15 + idx * 0.08, ease: [0.4, 0, 0.2, 1] }}
+                        style={{ height: '1px', backgroundColor: isDarkMode ? colors.border : 'rgba(235, 235, 235, 1)', margin: '20px 0' }}
+                      />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          </>
         ) : activeNavigation === 'Dashboard' ? (
           <>
             {/* Dashboard Header */}
