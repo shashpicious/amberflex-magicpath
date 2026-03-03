@@ -7,6 +7,7 @@ interface NavigationMenuProps {
 export const NavigationMenu: React.FC<NavigationMenuProps> = ({
   initialMode = 'light'
 }) => {
+  console.log('NavigationMenu rendering...');
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [isDarkMode, setIsDarkMode] = useState(initialMode === 'dark');
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -1993,10 +1994,52 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
               background: isDarkMode ? 'rgba(39, 39, 42, 1)' : 'rgba(244, 244, 245, 1)',
               borderRadius: '8px',
               padding: '3px',
-              gap: '2px'
+              gap: '2px',
+              position: 'relative'
             }}>
-              <button
-                onClick={() => setIsDarkMode(false)}
+              {/* Animated sliding background */}
+              <motion.div
+                layout
+                layoutId="theme-toggle-bg"
+                initial={false}
+                animate={{
+                  x: isDarkMode ? '100%' : '0%',
+                  scale: 1
+                }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 260,
+                  damping: 20,
+                  mass: 1,
+                  velocity: 0
+                }}
+                style={{
+                  position: 'absolute',
+                  top: '3px',
+                  left: '3px',
+                  width: 'calc(50% - 4px)',
+                  height: 'calc(100% - 6px)',
+                  background: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'white',
+                  borderRadius: '6px',
+                  boxShadow: isDarkMode 
+                    ? '0px 2px 4px rgba(0, 0, 0, 0.4), 0px 1px 2px rgba(0, 0, 0, 0.3)' 
+                    : '0px 2px 4px rgba(0, 0, 0, 0.08), 0px 1px 2px rgba(0, 0, 0, 0.06)',
+                  pointerEvents: 'none'
+                }}
+              />
+              
+              <motion.button
+                onClick={() => {
+                  playClickSound();
+                  setIsDarkMode(false);
+                }}
+                whileTap={{ scale: 0.9 }}
+                whileHover={{ scale: 1.08 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 400,
+                  damping: 17
+                }}
                 style={{
                   flex: 1,
                   display: 'flex',
@@ -2006,18 +2049,65 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                   borderRadius: '6px',
                   border: 'none',
                   cursor: 'pointer',
-                  background: !isDarkMode ? 'white' : 'transparent',
-                  boxShadow: !isDarkMode ? '0px 1px 2px rgba(0, 0, 0, 0.06)' : 'none',
-                  transition: 'all 0.2s ease'
+                  background: 'transparent',
+                  position: 'relative',
+                  zIndex: 1
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={!isDarkMode ? 'rgba(10, 10, 10, 1)' : 'rgba(163, 163, 163, 1)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <motion.svg 
+                  width="16" 
+                  height="16" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                  animate={{
+                    stroke: !isDarkMode ? 'rgba(10, 10, 10, 1)' : 'rgba(163, 163, 163, 1)',
+                    rotate: !isDarkMode ? 0 : -25,
+                    scale: !isDarkMode ? 1.1 : 0.85
+                  }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 18,
+                    mass: 0.8
+                  }}
+                >
                   <circle cx="12" cy="12" r="4" />
-                  <path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" />
-                </svg>
-              </button>
-              <button
-                onClick={() => setIsDarkMode(true)}
+                  <motion.g
+                    animate={{
+                      opacity: !isDarkMode ? 1 : 0.5
+                    }}
+                    transition={{ 
+                      duration: 0.4,
+                      ease: 'easeInOut'
+                    }}
+                  >
+                    <path d="M12 2v2" />
+                    <path d="M12 20v2" />
+                    <path d="m4.93 4.93 1.41 1.41" />
+                    <path d="m17.66 17.66 1.41 1.41" />
+                    <path d="M2 12h2" />
+                    <path d="M20 12h2" />
+                    <path d="m6.34 17.66-1.41 1.41" />
+                    <path d="m19.07 4.93-1.41 1.41" />
+                  </motion.g>
+                </motion.svg>
+              </motion.button>
+              
+              <motion.button
+                onClick={() => {
+                  playClickSound();
+                  setIsDarkMode(true);
+                }}
+                whileTap={{ scale: 0.9 }}
+                whileHover={{ scale: 1.08 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 400,
+                  damping: 17
+                }}
                 style={{
                   flex: 1,
                   display: 'flex',
@@ -2027,15 +2117,34 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
                   borderRadius: '6px',
                   border: 'none',
                   cursor: 'pointer',
-                  background: isDarkMode ? 'rgba(10, 10, 10, 1)' : 'transparent',
-                  boxShadow: isDarkMode ? '0px 1px 2px rgba(0, 0, 0, 0.3)' : 'none',
-                  transition: 'all 0.2s ease'
+                  background: 'transparent',
+                  position: 'relative',
+                  zIndex: 1
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isDarkMode ? 'rgba(250, 250, 250, 1)' : 'rgba(163, 163, 163, 1)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <motion.svg 
+                  width="16" 
+                  height="16" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                  animate={{
+                    stroke: isDarkMode ? 'rgba(250, 250, 250, 1)' : 'rgba(163, 163, 163, 1)',
+                    rotate: isDarkMode ? 0 : 25,
+                    scale: isDarkMode ? 1.1 : 0.85
+                  }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 18,
+                    mass: 0.8
+                  }}
+                >
                   <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-                </svg>
-              </button>
+                </motion.svg>
+              </motion.button>
             </div>
           </div>
 
