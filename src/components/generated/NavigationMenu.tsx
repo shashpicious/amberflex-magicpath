@@ -114,8 +114,8 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
   useEffect(() => {
     if (activeNavigation === 'Leads') {
       // Only set to 'Leads' if currently on a different page's tab (like 'Dashboard')
-      // This allows users to switch between 'Leads' and 'Prequalified Leads' while on Leads page
-      if (activeTab !== 'Leads' && activeTab !== 'Prequalified Leads') {
+      // This allows users to switch between 'Leads', 'Prequalified Leads' and 'Qualified Leads' while on Leads page
+      if (activeTab !== 'Leads' && activeTab !== 'Prequalified Leads' && activeTab !== 'Qualified Leads') {
         setActiveTab('Leads');
       }
     }
@@ -1108,7 +1108,105 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
     partner: 'Vindy Consultancy',
     created: '06/08/2025'
   }] as any[];
-  
+
+  const qualifiedLeadsData = [{
+    name: 'Oliver Bennett',
+    email: 'oliver.b@shadcnstudio.com',
+    initial: 'O',
+    color: 'rgba(186, 255, 201, 1)',
+    textColor: 'rgba(20, 83, 45, 1)',
+    status: 'Qualified',
+    city: 'London',
+    countryIcon: 'https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/ecc02272-7491-4bce-ba22-5da993789664.svg',
+    intake: 'Jan – Mar',
+    partner: 'IDP Education',
+    created: '04/01/2025'
+  }, {
+    name: 'Sophia Turner',
+    email: 'sophia.t@shadcnstudio.com',
+    initial: 'S',
+    color: 'rgba(255, 223, 186, 1)',
+    textColor: 'rgba(120, 53, 15, 1)',
+    status: 'Qualified',
+    city: 'Sydney',
+    countryIcon: 'https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/aac1bf7b-3bcc-41e0-9673-f2f5833a76fa.svg',
+    intake: 'Apr – Jun',
+    partner: 'Vindy Consultancy',
+    created: '04/05/2025'
+  }, {
+    name: 'Liam Foster',
+    email: 'liam.f@shadcnstudio.com',
+    initial: 'L',
+    color: 'rgba(192, 213, 255, 1)',
+    textColor: 'rgba(18, 35, 104, 1)',
+    status: 'Qualified',
+    city: 'Melbourne',
+    countryIcon: 'https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/aac1bf7b-3bcc-41e0-9673-f2f5833a76fa.svg',
+    intake: 'Jul – Sep',
+    partner: 'ABC Overseas',
+    created: '04/10/2025'
+  }, {
+    name: 'Emma Richardson',
+    email: 'emma.r@shadcnstudio.com',
+    initial: 'E',
+    color: 'rgba(255, 186, 240, 1)',
+    textColor: 'rgba(120, 15, 80, 1)',
+    status: 'Qualified',
+    city: 'Dublin',
+    countryIcon: 'https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/512916cb-9479-4866-80be-157231ec900f.svg',
+    intake: 'Oct – Dec',
+    partner: 'IDP Education',
+    created: '04/15/2025'
+  }, {
+    name: 'Noah Campbell',
+    email: 'noah.c@shadcnstudio.com',
+    initial: 'N',
+    color: 'rgba(192, 255, 234, 1)',
+    textColor: 'rgba(18, 104, 75, 1)',
+    status: 'Qualified',
+    city: 'Cork',
+    countryIcon: 'https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/512916cb-9479-4866-80be-157231ec900f.svg',
+    intake: 'Jan – Mar',
+    partner: 'Vindy Consultancy',
+    created: '04/20/2025'
+  }, {
+    name: 'Ava Mitchell',
+    email: 'ava.m@shadcnstudio.com',
+    initial: 'A',
+    color: 'rgba(234, 192, 255, 1)',
+    textColor: 'rgba(75, 18, 104, 1)',
+    status: 'Qualified',
+    city: 'Brisbane',
+    countryIcon: 'https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/aac1bf7b-3bcc-41e0-9673-f2f5833a76fa.svg',
+    intake: 'Apr – Jun',
+    partner: 'ABC Overseas',
+    created: '04/25/2025'
+  }, {
+    name: 'Ethan Parker',
+    email: 'ethan.p@shadcnstudio.com',
+    initial: 'E',
+    color: 'rgba(255, 234, 192, 1)',
+    textColor: 'rgba(104, 75, 18, 1)',
+    status: 'Qualified',
+    city: 'Perth',
+    countryIcon: 'https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/aac1bf7b-3bcc-41e0-9673-f2f5833a76fa.svg',
+    intake: 'Jul – Sep',
+    partner: 'IDP Education',
+    created: '04/30/2025'
+  }, {
+    name: 'Isabella Reed',
+    email: 'isabella.r@shadcnstudio.com',
+    initial: 'I',
+    color: 'rgba(202, 192, 255, 1)',
+    textColor: 'rgba(53, 26, 117, 1)',
+    status: 'Qualified',
+    city: 'Adelaide',
+    countryIcon: 'https://storage.googleapis.com/storage.magicpath.ai/user/374800043472998400/figma-assets/aac1bf7b-3bcc-41e0-9673-f2f5833a76fa.svg',
+    intake: 'Oct – Dec',
+    partner: 'Vindy Consultancy',
+    created: '05/05/2025'
+  }] as any[];
+
   // Listings data
   const listingsData = [
     { propertyName: 'Connectld1', providerName: 'A & o Hostels', type: 'Student Accommodation' },
@@ -1669,7 +1767,8 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
   });
   
   // Filter leads data based on search query
-  const filteredLeadsData = leadsData.filter((lead: any) => {
+  const activeLeadsSource = activeTab === 'Qualified Leads' ? qualifiedLeadsData : leadsData;
+  const filteredLeadsData = activeLeadsSource.filter((lead: any) => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       return (
@@ -1974,7 +2073,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
   const getStatusBadge = (status: string) => {
     let bgColor = 'rgba(227, 146, 25, 0.1)';
     let textColor = 'rgba(217, 119, 6, 1)';
-    if (status === 'Booked' || status === 'Paid' || status === 'Active') {
+    if (status === 'Booked' || status === 'Paid' || status === 'Active' || status === 'Qualified') {
       bgColor = 'rgba(22, 163, 74, 0.1)';
       textColor = 'rgba(22, 163, 74, 1)';
     } else if (status === 'Not Booked' || status === 'Unpaid' || status === 'Inactive') {
@@ -5106,7 +5205,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
           borderRadius: '10px',
           position: 'relative'
         }}>
-            {['Leads', 'Prequalified Leads'].map(tab => <motion.button
+            {['Leads', 'Prequalified Leads', 'Qualified Leads'].map(tab => <motion.button
               key={tab}
               onClick={() => {
                 playClickSound();
